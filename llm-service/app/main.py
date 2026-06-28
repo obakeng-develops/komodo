@@ -19,6 +19,7 @@ class DiagnoseResponse(BaseModel):
     diagnosis: str | None = None
     suggested_fix: str | None = None
     confidence: str | None = None
+    action: str | None = None  # restart_container | none — the server validates it
 
 
 def _verify_internal_key(x_internal_api_key: str | None = Header(None)):

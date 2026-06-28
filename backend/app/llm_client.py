@@ -36,4 +36,5 @@ async def diagnose(
             "diagnosis": data.get("diagnosis"),
             "suggested_fix": data.get("suggested_fix"),
             "confidence": data.get("confidence"),
+            "action": data.get("action"),
         }
