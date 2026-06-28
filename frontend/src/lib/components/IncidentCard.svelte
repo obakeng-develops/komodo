@@ -82,12 +82,12 @@
 		<span class={badgeClass()}>{incident.severity === 'down' ? '● down' : '◐ degraded'}</span>
 		<span class="flex-1 min-w-0">
 			<span class="flex items-center mb-1.5">
-				<span class="inline-flex items-center px-2 py-0.5 rounded-md bg-surface-200 border border-surface-300 font-medium text-[11px] font-mono text-surface-700">
+				<span class="inline-flex items-center px-2 py-0.5 rounded-md bg-surface-200 border border-surface-300 font-medium text-micro font-mono text-surface-700">
 					{incident.service_name || incident.service_id}
 				</span>
 			</span>
 			<span class="block font-serif text-base leading-snug text-surface-900">{incident.summary}</span>
-			<span class="block mt-1 font-mono text-[12px] text-surface-500">
+			<span class="block mt-1 font-mono text-label text-surface-500">
 				{incident.started_at ? new Date(incident.started_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''} ·
 				{incident.duration_seconds !== null ? `${incident.duration_seconds}s` : '—'} ·
 				{incident.action_taken || 'Pending'}
@@ -101,13 +101,13 @@
 		<div class="px-5 pb-6" transition:slide={{ duration: 200 }}>
 			{#if incident.llm_diagnosis}
 				<div class="mt-3 px-4 py-3 rounded-lg bg-surface-50 border border-surface-200">
-					<div class="font-mono text-[11px] text-surface-500 tracking-wide uppercase">Diagnosis</div>
-					<div class="mt-1.5 font-sans text-[15px] leading-relaxed text-surface-700">{incident.llm_diagnosis}</div>
+					<div class="font-mono text-micro text-surface-500 tracking-wide uppercase">Diagnosis</div>
+					<div class="mt-1.5 font-sans text-body leading-relaxed text-surface-700">{incident.llm_diagnosis}</div>
 					{#if incident.llm_suggested_fix}
-						<div class="mt-2 font-mono text-[12px] text-surface-600">{incident.llm_suggested_fix}</div>
+						<div class="mt-2 font-mono text-label text-surface-600">{incident.llm_suggested_fix}</div>
 					{/if}
 					{#if incident.llm_confidence}
-						<div class="mt-1.5 inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-surface-200 text-surface-700 font-sans text-[11px]">confidence: {incident.llm_confidence}</div>
+						<div class="mt-1.5 inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-surface-200 text-surface-700 font-sans text-micro">confidence: {incident.llm_confidence}</div>
 					{/if}
 				</div>
 			{/if}
@@ -119,14 +119,14 @@
 					<button
 						type="button"
 						on:click={() => (showLogs = !showLogs)}
-						class="px-3 py-1.5 rounded-lg bg-surface-100 text-surface-700 font-sans font-medium text-[12px] border border-surface-300 hover:bg-surface-200"
+						class="px-3 py-1.5 rounded-lg bg-surface-100 text-surface-700 font-sans font-medium text-label border border-surface-300 hover:bg-surface-200"
 					>
 						{showLogs ? 'Hide logs' : 'View docker logs'}
 					</button>
 					{#if showLogs}
 						<div
 							transition:slide={{ duration: 200 }}
-							class="mt-2 bg-surface-950 text-surface-100 rounded-lg p-3 font-mono text-[11px] overflow-x-auto whitespace-pre-wrap max-h-[300px] overflow-y-auto"
+							class="mt-2 bg-surface-950 text-surface-100 rounded-lg p-3 font-mono text-micro overflow-x-auto whitespace-pre-wrap max-h-[300px] overflow-y-auto"
 						>
 							{logs}
 						</div>
@@ -149,12 +149,12 @@
 			{/if}
 
 			<div class="mt-3.5 flex items-center gap-3.5">
-				<span class="font-mono text-[11px] text-surface-500 tracking-wide uppercase">confidence</span>
+				<span class="font-mono text-micro text-surface-500 tracking-wide uppercase">confidence</span>
 				<span class="font-sans font-medium text-sm text-surface-900">{incident.confidence_pct}%</span>
 				<span class="flex-1 h-[5px] rounded-full bg-surface-200 overflow-hidden">
 					<span class={meterClass()} style="width: {incident.confidence_pct}%"></span>
 				</span>
-				<span class="font-mono text-[12px] text-surface-500 flex items-center gap-1.5">
+				<span class="font-mono text-label text-surface-500 flex items-center gap-1.5">
 					<span class="text-surface-900">✓</span> messaged your phone
 				</span>
 			</div>
