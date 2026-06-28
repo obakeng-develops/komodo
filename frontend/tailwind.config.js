@@ -11,6 +11,16 @@ export default {
         serif: ['Georgia', "'Times New Roman'", 'serif'],
         mono: ["'JetBrains Mono'", 'monospace'],
       },
+      // Named type scale. Replaces the ~140 ad-hoc text-[NNpx] sizes; line-heights
+      // follow the 1.3–1.5 body range. Display/title/heading are serif; the rest body/mono.
+      fontSize: {
+        micro: ['11px', { lineHeight: '1.45' }],
+        label: ['13px', { lineHeight: '1.45' }],
+        body: ['15px', { lineHeight: '1.5' }],
+        heading: ['19px', { lineHeight: '1.3' }],
+        title: ['28px', { lineHeight: '1.15', letterSpacing: '-0.01em' }],
+        display: ['40px', { lineHeight: '1.05', letterSpacing: '-0.01em' }],
+      },
       colors: {
         // Greys
         surface: {
@@ -25,20 +35,6 @@ export default {
           800: '#404040',
           900: '#262626',
           950: '#171717',
-        },
-        // Single accent
-        accent: {
-          50: '#eef2ff',
-          100: '#e0e7ff',
-          200: '#c7d2fe',
-          300: '#a5b4fc',
-          400: '#818cf8',
-          500: '#6366f1',
-          600: '#4f46e5',
-          700: '#4338ca',
-          800: '#3730a3',
-          900: '#312e81',
-          950: '#1e1b4b',
         },
         // Semantic status colors (muted)
         success: {
@@ -55,6 +51,10 @@ export default {
         },
       },
       borderRadius: {
+        // Semantic radii: controls (buttons/inputs/selects) and cards. The 2xl/3xl
+        // aliases stay until screens migrate onto these.
+        control: '8px',
+        card: '14px',
         '2xl': '14px',
         '3xl': '18px',
       },
