@@ -49,6 +49,13 @@
 	let llmSavedMessage: string | null = null;
 
 	$: serverGroups = groupByServer(services);
+	// A server is expanded by default only when it has something wrong, so a
+	// fleet of healthy servers stays compact. A click overrides the default.
+	let expandedOverride: Record<string, boolean> = {};
+	const isExpanded = (g: { name: string; down: number; degraded: number }) =>
+		expandedOverride[g.name] ?? (g.down > 0 || g.degraded > 0);
+	const toggleGroup = (g: { name: string; down: number; degraded: number }) =>
+		(expandedOverride = { ...expandedOverride, [g.name]: !isExpanded(g) });
 	$: autonomy = settings?.autonomy ?? 'auto_fix';
 	$: profileDirty = user && (editName.trim() !== user.name || editPhone.trim() !== (user.phone ?? ''));
 	$: llmSettingsDirty = settings && (
@@ -458,17 +465,27 @@
 				<div class="mt-3.5 flex flex-col gap-4">
 					{#each serverGroups as group (group.name)}
 						<div class="flex flex-col gap-2.5">
-							<div class="flex items-center justify-between gap-3">
-								<div class="font-mono text-[11px] uppercase tracking-wide text-surface-500 truncate">{group.name}</div>
-								<div class="font-mono text-[11px] {group.down ? 'text-danger-600' : group.degraded ? 'text-surface-700' : 'text-surface-400'}">{serverRollup(group)}</div>
-							</div>
-							{#each group.services as service (service.id)}
-								<ServiceRow
-									{service}
-									on:toggle={(e) => setWatchOnly(service.id, e.detail.watch_only)}
-									on:remove={() => removeService(service.id)}
-								/>
-							{/each}
+							<button
+								type="button"
+								on:click={() => toggleGroup(group)}
+								class="flex items-center justify-between gap-3 bg-transparent border-none cursor-pointer text-left p-0 hover:opacity-70"
+							>
+								<span class="flex items-center gap-1.5 min-w-0">
+									<span class="text-surface-400 text-[10px]">{isExpanded(group) ? '▾' : '▸'}</span>
+									<span class="font-mono text-[11px] uppercase tracking-wide text-surface-500 truncate">{group.name}</span>
+									<span class="font-sans text-[11px] text-surface-400">{group.services.length}</span>
+								</span>
+								<span class="font-mono text-[11px] {group.down ? 'text-danger-600' : group.degraded ? 'text-surface-700' : 'text-surface-400'}">{serverRollup(group)}</span>
+							</button>
+							{#if isExpanded(group)}
+								{#each group.services as service (service.id)}
+									<ServiceRow
+										{service}
+										on:toggle={(e) => setWatchOnly(service.id, e.detail.watch_only)}
+										on:remove={() => removeService(service.id)}
+									/>
+								{/each}
+							{/if}
 						</div>
 					{/each}
 					{#if services.length === 0}
