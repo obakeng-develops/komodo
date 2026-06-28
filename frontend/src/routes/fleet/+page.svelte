@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { api } from '$lib/api';
+	import { isOwner } from '$lib/auth';
 	import type { Fleet, FleetService, FleetIncident } from '$lib/types';
 
 	const rollup = (down: number, degraded: number) =>
@@ -30,6 +31,17 @@
 	function setWindow(hours: number) {
 		windowHours = hours;
 		load();
+	}
+
+	async function toggleWatchOnly(svc: FleetService) {
+		await api.services.setWatchOnly(svc.id, !svc.watch_only);
+		await load();
+	}
+
+	async function removeService(svc: FleetService) {
+		if (!confirm(`Stop watching ${svc.name}? This removes it and its incident history.`)) return;
+		await api.services.delete(svc.id);
+		await load();
 	}
 
 	// Backend datetimes are naive UTC; parse them as UTC, not local.
@@ -119,7 +131,15 @@
 												<span class="flex-shrink-0 px-1.5 py-0.5 rounded bg-surface-100 text-surface-500 font-sans text-[10px]">watch-only</span>
 											{/if}
 										</span>
-										<span class="font-mono text-[12px] flex-shrink-0 {uptimeClass(svc.uptime_pct)}">{svc.uptime_pct}%</span>
+										<span class="flex items-center gap-3 flex-shrink-0">
+											{#if $isOwner}
+												<button type="button" on:click={() => toggleWatchOnly(svc)} class="bg-transparent border-none cursor-pointer font-sans text-[11px] text-surface-400 hover:text-surface-700" title={svc.watch_only ? 'Let Komodo act on this again' : 'Watch only — Komodo flags it but never restarts it'}>
+													{svc.watch_only ? 'allow fixes' : 'watch-only'}
+												</button>
+												<button type="button" on:click={() => removeService(svc)} class="bg-transparent border-none cursor-pointer font-sans text-[11px] text-surface-400 hover:text-danger-600" title="Stop watching this service">remove</button>
+											{/if}
+											<span class="font-mono text-[12px] {uptimeClass(svc.uptime_pct)}">{svc.uptime_pct}%</span>
+										</span>
 									</div>
 									<div class="mt-1.5 relative h-2 rounded-full bg-success-500/30 overflow-hidden">
 										{#each segments(svc.incidents) as seg}
