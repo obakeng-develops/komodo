@@ -23,12 +23,34 @@ def _headers(api_key: str) -> dict:
     }
 
 
-def _system_prompt() -> str:
+# Per-platform remediation context. A service's `method` is its executor type:
+# `agent`/`docker` run as Docker containers Komodo can restart; `url` is an
+# endpoint it can only alert on. Add a case here when an executor for a new
+# platform (e.g. kubernetes) actually exists, so the model is told what Komodo
+# can and cannot do for that kind of service.
+def _platform_guidance(method: str) -> str:
+    if method == "url":
+        return (
+            "This service is an HTTP endpoint. Komodo monitors it but CANNOT restart "
+            "or change it; it can only alert a human. Your FIX must be something a "
+            "person should check or do, not a command Komodo can run."
+        )
+    return (
+        "This service runs as a Docker container. The ONLY remediation Komodo can "
+        "perform is `docker restart <container>`. If a restart is the right first step, "
+        "say so in FIX. If a restart will not help, say a human is needed and what to "
+        "check. Do NOT suggest kubectl, systemd, cloud consoles, or any tool Komodo "
+        "does not have."
+    )
+
+
+def _system_prompt(method: str) -> str:
     return (
         "You are an expert site-reliability engineer diagnosing an incident from a monitored service. "
-        "Be concise. Respond with exactly three lines in this format:\n"
+        + _platform_guidance(method)
+        + " Be concise. Respond with exactly three lines in this format:\n"
         "CAUSE: one-sentence likely root cause\n"
-        "FIX: one concrete command or action to try\n"
+        "FIX: one concrete action within Komodo's abilities described above\n"
         "CONFIDENCE: low | medium | high\n"
         "Do not add extra commentary."
     )
@@ -87,7 +109,7 @@ async def diagnose(
     payload = {
         "model": model or settings.default_model,
         "messages": [
-            {"role": "system", "content": _system_prompt()},
+            {"role": "system", "content": _system_prompt(context.get("method", "agent"))},
             {"role": "user", "content": _user_prompt(context)},
         ],
         "temperature": 0.2,
