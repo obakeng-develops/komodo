@@ -428,6 +428,7 @@ class ServiceMonitor:
     # ---- shared state machine ---------------------------------------------
 
     async def _process_sources(self, snapshots: dict[str, _ServiceSnapshot], source_name: str):
+        await self._reconcile_active_incident()
         by_name = {s.name: s for s in snapshots.values()}
 
         if self._view in ACTIVE_VIEWS:
@@ -668,6 +669,44 @@ class ServiceMonitor:
         # ponytail: for MVP, executor runs on the same host as the control plane.
         # Replace with per-host executor URL when scaling out.
         return "http://localhost:8002"
+
+    async def _reconcile_active_incident(self):
+        """Self-heal if the active incident's row was deleted out from under us
+        (e.g. its server was removed). The monitor keeps the active incident in
+        memory, so a delete would otherwise leave the Now card stuck on a
+        nonexistent incident until the process restarts. See issue #21."""
+        if not self._incident_id:
+            return
+        still_there = await asyncio.to_thread(self._active_incident_exists, self._incident_id)
+        if not still_there:
+            logger.info("active incident %s is gone from the DB; resetting to resting", self._incident_id)
+            self._reset_to_resting()
+            self._broadcast_state()
+
+    @staticmethod
+    def _active_incident_exists(incident_id: str) -> bool:
+        db = SessionLocal()
+        try:
+            return db.query(Incident.id).filter(Incident.id == incident_id).first() is not None
+        finally:
+            db.close()
+
+    def _reset_to_resting(self):
+        self._view = "resting"
+        self._incident_id = None
+        self._service_id = None
+        self._service_name = None
+        self._container = None
+        self._method = None
+        self._host_id = None
+        self._tail_logs = False
+        self._llm_diagnosis = None
+        self._llm_suggested_fix = None
+        self._llm_confidence = None
+        self._elapsed = 0
+        if self._awaiting_logs_task and not self._awaiting_logs_task.done():
+            self._awaiting_logs_task.cancel()
+        self._awaiting_logs_task = None
 
     async def _finish(self, status: str, action: str):
         await asyncio.to_thread(self._resolve_incident, status, action)
