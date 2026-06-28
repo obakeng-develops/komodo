@@ -149,9 +149,9 @@
 	$: statusText = $activeIncident?.status_text || summaryText();
 </script>
 
-<div class="px-10 py-9 pb-20">
+<div class="px-4 sm:px-10 py-7 sm:py-9 pb-20">
 	<div class="max-w-[680px] mx-auto">
-		<div class="flex justify-between items-center mb-6">
+		<div class="flex flex-wrap gap-3 justify-between items-center mb-6">
 			<div class="font-serif text-[22px] leading-none text-surface-900 tracking-tight">Now</div>
 			<div class="inline-flex items-center gap-2.5">
 				<span class="font-mono text-[11px] text-surface-500 tracking-widest uppercase">autonomy</span>
@@ -172,12 +172,12 @@
 					aria-live="polite"
 				>
 					{#if !$activeIncident || $activeIncident.view === 'resting'}
-						<div class="p-10" in:contentFly|local>
+						<div class="p-6 sm:p-10" in:contentFly|local>
 							<div class="inline-flex items-center gap-2 font-mono text-xs text-surface-500 tracking-wide">
 										<span class="w-2 h-2 rounded-full {dotClasses()}"></span>
 								{statusText}
 							</div>
-							<div class="mt-7 font-serif text-[40px] leading-tight text-surface-900 tracking-tight">Everything's fine.</div>
+							<div class="mt-7 font-serif text-display text-surface-900 tracking-tight">Everything's fine.</div>
 							<div class="mt-4 font-sans text-base leading-relaxed text-surface-600">
 								{summaryText()} · watching <strong class="font-semibold text-surface-900">{services.length} service{services.length === 1 ? '' : 's'}</strong>
 								{#if serverGroups.length > 1}across <strong class="font-semibold text-surface-900">{serverGroups.length} servers</strong>{/if}.
@@ -188,7 +188,7 @@
 										<button
 											type="button"
 											class="flex items-center justify-between gap-3 py-2.5 bg-transparent border-none cursor-pointer text-left hover:opacity-70"
-											on:click={() => goto('/settings')}
+											on:click={() => goto('/fleet')}
 										>
 											<span class="flex items-center gap-2.5 min-w-0">
 												<span class="w-1.5 h-1.5 rounded-full flex-shrink-0 {group.down ? 'bg-danger-500' : group.degraded ? 'bg-surface-400' : 'bg-surface-300'}"></span>
@@ -200,28 +200,22 @@
 									{/each}
 								</div>
 							{/if}
-							<div class="mt-6 pt-5 border-t border-surface-200 flex justify-between items-center">
-								<button
-									class="bg-transparent border-none cursor-pointer font-mono text-xs text-surface-500 underline underline-offset-[3px] decoration-surface-400 hover:text-surface-900"
-									on:click={() => goto('/settings')}
-								>
-									I watch every container on this host — see them in settings
-								</button>
-								{#if $isOwner}
+							{#if $isOwner}
+								<div class="mt-7 pt-5 border-t border-surface-200">
 									<button
 										class="bg-transparent border-none cursor-pointer font-mono text-xs text-surface-500 underline underline-offset-[3px] decoration-surface-400 hover:text-surface-900 disabled:opacity-50"
 										on:click={simulate}
 										disabled={loading}
 									>
-										▸ {loading ? 'stopping a container…' : 'stop a container (test recovery)'}
+										▸ {loading ? 'stopping a container…' : 'stop a container to test recovery'}
 									</button>
-								{/if}
-							</div>
+								</div>
+							{/if}
 						</div>
 					{:else if $activeIncident.view === 'asking'}
-						<div class="p-9" in:contentFly|local>
+						<div class="p-5 sm:p-9" in:contentFly|local>
 							<div class="flex justify-between items-start gap-4">
-								<div class="font-serif text-[30px] leading-snug text-surface-900 tracking-tight">
+								<div class="font-serif text-title leading-snug text-surface-900 tracking-tight">
 									{$activeIncident.service_name} is down. A restart usually fixes it — want me to?
 								</div>
 								<span class={badgeClasses()}>{badgeLabel()}</span>
@@ -273,7 +267,7 @@
 									class="h-48 p-4 bg-surface-950 text-surface-200 font-mono text-[12px] leading-snug overflow-y-auto whitespace-pre-wrap"
 									>{#if trimmedLogLines.length}{trimmedLogLines.join('\n')}{:else}<span class="text-surface-500">Waiting for log lines from the agent…</span>{/if}</pre>
 							</div>
-							<div class="mt-5 pt-5 border-t border-surface-200 flex items-center gap-3">
+							<div class="mt-5 pt-5 border-t border-surface-200 flex flex-col sm:flex-row sm:items-center gap-3">
 								<button
 									class="inline-flex items-center justify-center px-5 py-2.5 rounded-lg bg-surface-900 text-white font-sans font-medium text-sm border-none cursor-pointer hover:bg-surface-800"
 									on:click={approve}
@@ -289,9 +283,9 @@
 							</div>
 						</div>
 					{:else if ['detecting', 'diagnosing', 'fixing', 'verifying'].includes($activeIncident.view)}
-						<div class="p-9" in:contentFly|local>
+						<div class="p-5 sm:p-9" in:contentFly|local>
 							<div class="flex justify-between items-start gap-4">
-								<div class="font-serif text-[30px] leading-snug text-surface-900 tracking-tight">
+								<div class="font-serif text-title leading-snug text-surface-900 tracking-tight">
 									{$activeIncident.service_name} is wedged. I'm restarting it.
 								</div>
 								<span class={badgeClasses()}>{badgeLabel()}</span>
@@ -343,7 +337,7 @@
 									class="h-48 p-4 bg-surface-950 text-surface-200 font-mono text-[12px] leading-snug overflow-y-auto whitespace-pre-wrap"
 									>{#if trimmedLogLines.length}{trimmedLogLines.join('\n')}{:else}<span class="text-surface-500">Waiting for log lines from the agent…</span>{/if}</pre>
 							</div>
-							<div class="mt-5 pt-5 border-t border-surface-200 flex justify-between items-center">
+							<div class="mt-5 pt-5 border-t border-surface-200 flex flex-wrap justify-between items-center gap-3">
 								<div class="flex items-center gap-3">
 									<button
 										class="inline-flex items-center justify-center px-5 py-2.5 rounded-lg bg-surface-900 text-white font-sans font-medium text-sm border-none cursor-pointer hover:bg-surface-800"
@@ -358,9 +352,9 @@
 							</div>
 						</div>
 					{:else if $activeIncident.view === 'resolved'}
-						<div class="p-9" in:contentFly|local>
+						<div class="p-5 sm:p-9" in:contentFly|local>
 							<div class={badgeClasses()}>{badgeLabel()}</div>
-							<div class="mt-4 font-serif text-4xl leading-tight text-surface-900 tracking-tight">{$activeIncident.service_name} is back.</div>
+							<div class="mt-4 font-serif text-title leading-tight text-surface-900 tracking-tight">{$activeIncident.service_name} is back.</div>
 							<div class="mt-3.5 font-sans text-base leading-relaxed text-surface-600">
 								Down for <span class="font-mono text-sm text-surface-900">{$activeIncident.elapsed}s</span>. Health check is green again.
 							</div>
@@ -401,7 +395,7 @@
 									class="h-48 p-4 bg-surface-950 text-surface-200 font-mono text-[12px] leading-snug overflow-y-auto whitespace-pre-wrap"
 									>{#if trimmedLogLines.length}{trimmedLogLines.join('\n')}{:else}<span class="text-surface-500">No logs captured.</span>{/if}</pre>
 							</div>
-							<div class="mt-7 pt-5 border-t border-surface-200 flex justify-between items-center">
+							<div class="mt-7 pt-5 border-t border-surface-200 flex flex-wrap justify-between items-center gap-3">
 								<button
 									class="inline-flex items-center justify-center px-5 py-2.5 rounded-lg bg-surface-900 text-white font-sans font-medium text-sm border-none cursor-pointer hover:bg-surface-800"
 									on:click={backToWatching}
@@ -417,9 +411,9 @@
 							</div>
 						</div>
 					{:else if $activeIncident.view === 'takeover'}
-						<div class="p-9" in:contentFly|local>
+						<div class="p-5 sm:p-9" in:contentFly|local>
 							<div class={badgeClasses()}>{badgeLabel()}</div>
-							<div class="mt-4 font-serif text-[32px] leading-snug text-surface-900 tracking-tight">Okay — it's yours.</div>
+							<div class="mt-4 font-serif text-title leading-snug text-surface-900 tracking-tight">Okay — it's yours.</div>
 							<div class="mt-3.5 font-serif text-base leading-relaxed text-surface-600">
 								I've stepped back and won't touch anything. Here's the fix I was about to run, if it helps:
 							</div>
@@ -430,7 +424,7 @@
 								<button class="bg-transparent border-none cursor-pointer font-medium text-xs font-mono text-surface-600 underline underline-offset-[3px] decoration-surface-400 hover:text-surface-900">view logs ↗</button>
 								<button class="bg-transparent border-none cursor-pointer font-medium text-xs font-mono text-surface-600 underline underline-offset-[3px] decoration-surface-400 hover:text-surface-900">open /healthz ↗</button>
 							</div>
-							<div class="mt-6 pt-5 border-t border-surface-200 flex items-center gap-3">
+							<div class="mt-6 pt-5 border-t border-surface-200 flex flex-col sm:flex-row sm:items-center gap-3">
 								<button
 									class="inline-flex items-center justify-center px-5 py-2.5 rounded-lg bg-surface-900 text-white font-sans font-medium text-sm border-none cursor-pointer hover:bg-surface-800"
 									on:click={manualResolve}
