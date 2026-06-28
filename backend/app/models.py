@@ -80,10 +80,16 @@ class Service(Base):
 
     user = relationship("User", back_populates="services")
     host = relationship("Host", back_populates="services")
-    # cascade so removing a service drops its incidents instead of nulling the
-    # NOT NULL incidents.service_id (which 500s the delete).
+    # cascade so removing a service drops everything that references it instead
+    # of hitting a foreign-key violation (which 500s the delete).
     incidents = relationship(
         "Incident", back_populates="service", cascade="all, delete-orphan"
+    )
+    learnings = relationship(
+        "Learning", back_populates="service", cascade="all, delete-orphan"
+    )
+    guardrails = relationship(
+        "Guardrail", back_populates="service", cascade="all, delete-orphan"
     )
 
 
@@ -139,7 +145,7 @@ class Learning(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     user = relationship("User", back_populates="learnings")
-    service = relationship("Service")
+    service = relationship("Service", back_populates="learnings")
 
 
 class Guardrail(Base):
@@ -154,6 +160,6 @@ class Guardrail(Base):
     value = Column(Boolean, nullable=False)
 
     user = relationship("User", back_populates="guardrails")
-    service = relationship("Service")
+    service = relationship("Service", back_populates="guardrails")
 
 
