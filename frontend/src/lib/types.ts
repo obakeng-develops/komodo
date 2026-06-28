@@ -56,6 +56,34 @@ export interface Host {
   agent_outdated: boolean;
 }
 
+export interface FleetIncident {
+  started_at: string;
+  resolved_at: string | null;
+  severity: 'down' | 'degraded';
+  status: string;
+}
+
+export interface FleetService {
+  id: string;
+  name: string;
+  status: string;
+  watch_only: boolean;
+  uptime_pct: number;
+  incidents: FleetIncident[];
+}
+
+export interface FleetServer {
+  name: string;
+  down: number;
+  degraded: number;
+  services: FleetService[];
+}
+
+export interface Fleet {
+  window_hours: number;
+  servers: FleetServer[];
+}
+
 export interface IncidentEvent {
   id: string;
   timestamp: string;
