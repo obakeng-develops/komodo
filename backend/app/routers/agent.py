@@ -1,6 +1,8 @@
 import asyncio
 import logging
+import re
 from datetime import datetime
+from functools import lru_cache
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import PlainTextResponse
@@ -17,6 +19,19 @@ logger = logging.getLogger("oncall.agent")
 
 router = APIRouter(prefix="/agent", tags=["agent"])
 
+_AGENT_SCRIPT = ROOT.parent / "agent" / "komodo-agent.py"
+
+
+@lru_cache(maxsize=1)
+def current_agent_version() -> str | None:
+    """The AGENT_VERSION of the script this server serves — the version a host
+    should be running. Cached for the process; a new deploy restarts it."""
+    try:
+        m = re.search(r'AGENT_VERSION\s*=\s*"([^"]+)"', _AGENT_SCRIPT.read_text())
+        return m.group(1) if m else None
+    except OSError:
+        return None
+
 
 @router.post("/beat", response_model=AgentBeatResponse)
 async def agent_beat(
@@ -29,6 +44,8 @@ async def agent_beat(
     if logs:
         await asyncio.to_thread(monitor.store_agent_logs, host, logs)
     host.last_seen_at = datetime.utcnow()
+    if payload.agent_version:
+        host.agent_version = payload.agent_version
     db.add(host)
     db.commit()
     logger.info("host=%s beat received containers=%d restart_actions=%d", host.name, len(payload.containers), len(restart_actions))

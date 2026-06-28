@@ -504,7 +504,12 @@
 						<div class="bg-white border border-surface-300 rounded-xl px-4 py-3.5">
 							<div class="flex items-center justify-between gap-3">
 								<div class="min-w-0">
-									<div class="font-mono font-medium text-sm text-surface-900 truncate">{host.name}</div>
+									<div class="flex items-center gap-2">
+										<span class="font-mono font-medium text-sm text-surface-900 truncate">{host.name}</span>
+										{#if host.agent_outdated}
+											<span class="flex-shrink-0 px-1.5 py-0.5 rounded bg-warning-500/15 text-warning-600 font-sans text-[10px] font-medium" title="Re-run the install command to update this agent">agent out of date</span>
+										{/if}
+									</div>
 									<div class="mt-[3px] font-mono text-[11px] text-surface-500">
 										{host.token_preview}
 										{#if host.last_seen_at}
