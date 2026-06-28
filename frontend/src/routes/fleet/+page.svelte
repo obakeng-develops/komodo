@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import { api } from '$lib/api';
 	import { isOwner } from '$lib/auth';
+	import SegmentedControl from '$lib/components/ui/SegmentedControl.svelte';
 	import type { Fleet, FleetService, FleetIncident } from '$lib/types';
 
 	const rollup = (down: number, degraded: number) =>
@@ -12,9 +13,9 @@
 	let loading = true;
 
 	const WINDOWS = [
-		{ label: '24h', hours: 24 },
-		{ label: '7d', hours: 168 },
-		{ label: '30d', hours: 720 }
+		{ value: '24', label: '24h' },
+		{ value: '168', label: '7d' },
+		{ value: '720', label: '30d' }
 	];
 
 	onMount(load);
@@ -84,24 +85,21 @@
 	}
 </script>
 
-<div class="px-10 py-9 pb-20">
+<div class="px-4 sm:px-10 py-7 sm:py-9 pb-20">
 	<div class="max-w-[760px] mx-auto">
-		<div class="flex items-end justify-between gap-4">
+		<div class="flex flex-wrap items-end justify-between gap-4">
 			<div>
-				<div class="font-serif text-[28px] leading-none text-surface-900 tracking-tight">Fleet</div>
-				<div class="mt-2 font-sans text-sm leading-relaxed text-surface-500">
+				<div class="font-serif text-title leading-none text-surface-900">Fleet</div>
+				<div class="mt-2 font-sans text-label leading-relaxed text-surface-500">
 					Every server and how it's held up.
 				</div>
 			</div>
-			<div class="inline-flex rounded-lg border border-surface-300 overflow-hidden flex-shrink-0">
-				{#each WINDOWS as w}
-					<button
-						type="button"
-						on:click={() => setWindow(w.hours)}
-						class="px-3 py-1.5 font-mono text-[12px] border-none cursor-pointer {windowHours === w.hours ? 'bg-surface-900 text-white' : 'bg-white text-surface-600 hover:bg-surface-50'}"
-					>{w.label}</button>
-				{/each}
-			</div>
+			<SegmentedControl
+				options={WINDOWS}
+				value={String(windowHours)}
+				size="sm"
+				on:change={(e) => setWindow(Number(e.detail))}
+			/>
 		</div>
 
 		{#if loading && !fleet}
@@ -113,10 +111,10 @@
 		{:else if fleet}
 			<div class="mt-7 flex flex-col gap-5">
 				{#each fleet.servers as server (server.name)}
-					<div class="bg-white border border-surface-300 rounded-2xl p-5 shadow-sm">
+					<div class="bg-white border border-surface-300 rounded-card p-5 shadow-card">
 						<div class="flex items-center justify-between gap-3 pb-3 border-b border-surface-100">
-							<div class="font-mono text-[13px] text-surface-900 truncate">{server.name}</div>
-							<div class="font-mono text-[11px] {server.down ? 'text-danger-600' : server.degraded ? 'text-warning-600' : 'text-surface-400'}">
+							<div class="font-mono text-label text-surface-900 truncate">{server.name}</div>
+							<div class="font-mono text-micro {server.down ? 'text-danger-600' : server.degraded ? 'text-warning-600' : 'text-surface-400'}">
 								{rollup(server.down, server.degraded)}
 							</div>
 						</div>
@@ -126,19 +124,19 @@
 									<div class="flex items-center justify-between gap-3">
 										<span class="flex items-center gap-2 min-w-0">
 											<span class="w-1.5 h-1.5 rounded-full flex-shrink-0 {dotClass(svc.status)}"></span>
-											<span class="font-mono text-[13px] text-surface-800 truncate">{svc.name}</span>
+											<span class="font-mono text-label text-surface-800 truncate">{svc.name}</span>
 											{#if svc.watch_only}
-												<span class="flex-shrink-0 px-1.5 py-0.5 rounded bg-surface-100 text-surface-500 font-sans text-[10px]">watch-only</span>
+												<span class="flex-shrink-0 px-1.5 py-0.5 rounded bg-surface-100 text-surface-500 font-sans text-micro">watch-only</span>
 											{/if}
 										</span>
 										<span class="flex items-center gap-3 flex-shrink-0">
 											{#if $isOwner}
-												<button type="button" on:click={() => toggleWatchOnly(svc)} class="bg-transparent border-none cursor-pointer font-sans text-[11px] text-surface-400 hover:text-surface-700" title={svc.watch_only ? 'Let Komodo act on this again' : 'Watch only — Komodo flags it but never restarts it'}>
+												<button type="button" on:click={() => toggleWatchOnly(svc)} class="bg-transparent border-none cursor-pointer font-sans text-micro text-surface-400 hover:text-surface-700" title={svc.watch_only ? 'Let Komodo act on this again' : 'Watch only — Komodo flags it but never restarts it'}>
 													{svc.watch_only ? 'allow fixes' : 'watch-only'}
 												</button>
-												<button type="button" on:click={() => removeService(svc)} class="bg-transparent border-none cursor-pointer font-sans text-[11px] text-surface-400 hover:text-danger-600" title="Stop watching this service">remove</button>
+												<button type="button" on:click={() => removeService(svc)} class="bg-transparent border-none cursor-pointer font-sans text-micro text-surface-400 hover:text-danger-600" title="Stop watching this service">remove</button>
 											{/if}
-											<span class="font-mono text-[12px] {uptimeClass(svc.uptime_pct)}">{svc.uptime_pct}%</span>
+											<span class="font-mono text-label {uptimeClass(svc.uptime_pct)}">{svc.uptime_pct}%</span>
 										</span>
 									</div>
 									<div class="mt-1.5 relative h-2 rounded-full bg-success-500/30 overflow-hidden">
@@ -149,7 +147,7 @@
 											></span>
 										{/each}
 									</div>
-									<div class="mt-1 font-sans text-[11px] text-surface-400">{lastIncidentNote(svc)}</div>
+									<div class="mt-1 font-sans text-micro text-surface-400">{lastIncidentNote(svc)}</div>
 								</div>
 							{/each}
 						</div>
