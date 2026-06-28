@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from app.deps import get_current_user, get_db_session, require_owner
+from app.deps import allowed_host_ids, get_current_user, get_db_session, host_allowed, require_owner
 from app.models import Service, User
 from app.schemas import ServiceCreate, ServiceOut, ServiceUpdate
 
@@ -29,8 +29,13 @@ def _service_out(service: Service) -> ServiceOut:
 
 
 @router.get("", response_model=list[ServiceOut])
-def list_services(user: User = Depends(get_current_user)):
-    return [_service_out(s) for s in user.services]
+def list_services(
+    user: User = Depends(get_current_user),
+    allowed: set[str] | None = Depends(allowed_host_ids),
+):
+    return [
+        _service_out(s) for s in user.services if host_allowed(allowed, s.host_id)
+    ]
 
 
 @router.post("", response_model=ServiceOut, status_code=201)
