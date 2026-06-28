@@ -61,16 +61,17 @@ Run the llm-service as a second, private fly app and point the web app at it.
 ```bash
 cd llm-service
 fly apps create komodo-llm
+fly ips allocate-v6 --private --app komodo-llm   # private flycast address
 fly secrets set --app komodo-llm ENCRYPTION_KEY=<same> INTERNAL_API_KEY=<same>
 fly deploy
 ```
 
-Then set `LLM_SERVICE_URL` on the web app to the private address:
+Then point the web app at it over flycast:
 
 ```bash
 fly secrets set --app komodo LLM_SERVICE_URL=http://komodo-llm.flycast:8001
 ```
 
-Two notes: give the llm-service the **same** `ENCRYPTION_KEY` and `INTERNAL_API_KEY` as the web app,
-or the stored LLM key will not decrypt. And bind it on IPv6 so fly's private network can reach it
-(have its uvicorn listen on `::`, not just `0.0.0.0`).
+Give the llm-service the **same** `ENCRYPTION_KEY` and `INTERNAL_API_KEY` as the web app, or the
+stored LLM key will not decrypt. The service has no public ports; fly-proxy routes flycast to it
+privately, so the image keeps binding `0.0.0.0`.
