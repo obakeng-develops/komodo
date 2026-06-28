@@ -41,6 +41,11 @@ def _owner(db: Session) -> User | None:
     return db.query(User).filter(User.role == "owner").first()
 
 
+def _learned_from(incidents: int, successes: int) -> str:
+    noun = "incident" if incidents == 1 else "incidents"
+    return f"learned from {incidents} {noun} · recovered {successes} / {incidents}"
+
+
 class _ServiceSnapshot:
     """Unified view of a service's current state, regardless of source."""
 
@@ -792,14 +797,19 @@ class ServiceMonitor:
 
     def _record_learning(self, db: Session, incident: Incident):
         rule_text = f"When {self._service_name} goes unhealthy, a docker restart brings it back."
+        # Match on the rule, not the service id. A re-added host gives the same
+        # container a fresh service id, and keying on it spawned a duplicate card
+        # for what is the same recurring behavior.
         existing = (
             db.query(Learning)
-            .filter(Learning.service_id == self._service_id, Learning.rule == rule_text)
+            .filter(Learning.user_id == incident.user_id, Learning.rule == rule_text)
             .first()
         )
         if existing:
             existing.incident_count += 1
             existing.success_count += 1
+            existing.service_id = self._service_id  # point at the current service
+            existing.learned_from = _learned_from(existing.incident_count, existing.success_count)
             existing.updated_at = datetime.utcnow()
         else:
             db.add(
@@ -807,7 +817,7 @@ class ServiceMonitor:
                     user_id=incident.user_id,
                     service_id=self._service_id,
                     rule=rule_text,
-                    learned_from="learned from 1 incident · recovered 1 / 1",
+                    learned_from=_learned_from(1, 1),
                     behavior="auto_fix",
                     incident_count=1,
                     success_count=1,
