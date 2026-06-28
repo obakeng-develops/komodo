@@ -37,9 +37,9 @@
 {:else if loading || !$currentUser}
 	<div class="min-h-screen flex items-center justify-center text-surface-500">Loading…</div>
 {:else}
-	<div class="min-h-screen flex font-sans text-surface-900">
+	<div class="min-h-screen md:flex font-sans text-surface-900">
 		<Sidebar user={$currentUser} />
-		<main class="flex-1 bg-surface-100 min-h-screen">
+		<main class="flex-1 min-w-0 bg-surface-100 min-h-screen">
 			<slot />
 		</main>
 	</div>
