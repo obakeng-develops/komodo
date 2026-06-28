@@ -7,8 +7,8 @@ from fastapi.responses import PlainTextResponse
 from sqlalchemy.orm import Session
 
 from app.config import ROOT
-from app.deps import get_current_host, get_db_session, require_owner
-from app.models import Host, User
+from app.deps import get_current_host, get_db_session
+from app.models import Host
 from app.monitor import monitor
 from app.schemas import AgentBeatPayload, AgentBeatResponse, AgentLogPayload
 from app.stream import stream_manager
@@ -48,7 +48,10 @@ async def agent_logs(
 
 
 @router.get("/script", response_class=PlainTextResponse)
-def agent_script(user: User = Depends(require_owner)):
+def agent_script():
+    # Public on purpose: the script is open source, and the host token (not this
+    # endpoint) is what authorizes an agent's beats. This lets the install
+    # one-liner run unauthenticated on a fresh host.
     path = ROOT.parent / "agent" / "komodo-agent.py"
     if not path.exists():
         raise HTTPException(status_code=404, detail="Agent script not found")
