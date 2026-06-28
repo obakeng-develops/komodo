@@ -15,6 +15,7 @@ single-process prototype; move it to the DB if you run multiple workers.
 import asyncio
 import logging
 import random
+import re
 from datetime import datetime, timedelta
 from typing import Any
 
@@ -44,6 +45,17 @@ def _owner(db: Session) -> User | None:
 def _learned_from(incidents: int, successes: int) -> str:
     noun = "incident" if incidents == 1 else "incidents"
     return f"learned from {incidents} {noun} · recovered {successes} / {incidents}"
+
+
+# Strip a container's version suffix to get the service it belongs to. Kamal
+# names containers <service>-<role>-<git-sha>, <service>-<role>-latest, and
+# tacks on _replaced_<hex> when it rolls one out. All of those are one service.
+# Names without such a suffix (plain Docker, a `db` role) are their own identity.
+_VERSION_SUFFIX = re.compile(r"-([0-9a-f]{7,40}|latest)(_replaced_[0-9a-f]+)?$")
+
+
+def _service_identity(name: str) -> str:
+    return _VERSION_SUFFIX.sub("", name) or name
 
 
 class _ServiceSnapshot:
@@ -254,10 +266,17 @@ class ServiceMonitor:
             svc_map: dict[str, dict] = {}
             snapshots: dict[str, _ServiceSnapshot] = {}
             fetch_logs: list[str] = []
+            # Service identities that have a running container this beat. A down
+            # container whose service still has a running sibling is a rollover or
+            # an old version, not an outage. See issue #17.
+            running_identities = {
+                _service_identity(c["name"]) for c in containers if c["status"] != "down"
+            }
             for c in containers:
                 name = c["name"]
                 key = (host.id, name)
                 svc = existing.get(key)
+                superseded = c["status"] == "down" and _service_identity(name) in running_identities
                 if svc is None:
                     if c["status"] == "down":
                         # First time we've seen this container and it isn't
@@ -275,6 +294,14 @@ class ServiceMonitor:
                         watch_only=False,
                     )
                     db.add(svc)
+                elif superseded:
+                    # We tracked this container while it ran, but a deploy has
+                    # since replaced it with a running sibling. Drop the old
+                    # version so a rollover doesn't read as an outage. The agent
+                    # keeps reporting the stopped container, but it's first-seen
+                    # again next beat and skipped above. See issue #17.
+                    db.delete(svc)
+                    continue
                 else:
                     svc.method = "agent"
                     svc.host_id = host.id
