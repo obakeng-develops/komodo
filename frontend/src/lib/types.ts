@@ -51,6 +51,7 @@ export interface Host {
   install_backend_url?: string;
   last_seen_at: string | null;
   created_at: string;
+  autonomy: 'auto_fix' | 'ask_first' | null;
 }
 
 export interface IncidentEvent {
