@@ -1,5 +1,4 @@
 from fastapi import Depends, HTTPException, Header, Request
-import hmac
 
 import bcrypt
 import jwt
@@ -61,23 +60,14 @@ def require_owner(identity: User = Depends(current_identity)) -> User:
 get_current_user = fleet_owner
 
 
-def _constant_time_compare(a: str, b: str) -> bool:
-    return hmac.compare_digest(a.encode(), b.encode())
-
-
 def verify_agent_token(token: str, token_hash: str | None) -> bool:
+    # We only ever store a bcrypt hash of the agent token, never the token itself.
     if not token or not token_hash:
         return False
-    # token_hash is stored as a bcrypt-style hash produced by hash_agent_token.
-    # For the initial migration, plaintext tokens still compare directly.
-    if token_hash.startswith("$2"):
-        import bcrypt
-        return bcrypt.checkpw(token.encode(), token_hash.encode())
-    return _constant_time_compare(token, token_hash)
+    return bcrypt.checkpw(token.encode(), token_hash.encode())
 
 
 def hash_agent_token(token: str) -> str:
-    import bcrypt
     return bcrypt.hashpw(token.encode(), bcrypt.gensalt()).decode()
 
 
@@ -88,10 +78,8 @@ def get_current_host(
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Missing or invalid Authorization header")
     token = authorization[7:]
-    host = db.query(Host).filter(Host.token == token).first()
-    if host:
-        return host
-    # Fall back to hashed token comparison.
+    # Authenticate against the stored bcrypt hash only. The plaintext token is
+    # shown once at creation and never persisted, so a database read leaks nothing.
     for host in db.query(Host).all():
         if verify_agent_token(token, host.token_hash):
             return host
