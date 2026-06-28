@@ -5,7 +5,7 @@ from pydantic import ConfigDict
 from sqlalchemy.orm import Session
 
 from app.deps import get_current_user, get_db_session, hash_agent_token, require_owner
-from app.models import Host, Service, User
+from app.models import Host, User
 from app.schemas import HostCreate, HostOut
 from pydantic import BaseModel
 from datetime import datetime
@@ -85,7 +85,10 @@ def delete_host(
     host = db.query(Host).filter(Host.id == host_id, Host.user_id == user.id).first()
     if not host:
         raise HTTPException(status_code=404, detail="Host not found")
-    db.query(Service).filter(Service.host_id == host.id).delete(synchronize_session=False)
+    # ORM-delete each service (not a bulk delete) so the cascades fire and take
+    # the services' incidents, learnings, and guardrails with them.
+    for service in list(host.services):
+        db.delete(service)
     db.delete(host)
     db.commit()
     return None
