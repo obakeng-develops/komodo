@@ -299,38 +299,38 @@
 
 </script>
 
-<div class="px-10 py-9 pb-20">
+<div class="px-4 sm:px-10 py-7 sm:py-9 pb-20">
 	<div class="max-w-[560px] mx-auto">
-		<div class="font-serif text-[28px] leading-none text-surface-900 tracking-tight">Settings</div>
+		<div class="font-serif text-title leading-none text-surface-900 tracking-tight">Settings</div>
 
 		{#if loadError}
-			<div class="mt-5 bg-danger-500/10 border border-danger-500/30 rounded-2xl p-5">
-				<div class="font-sans font-semibold text-[13px] text-danger-600">Can't reach the backend</div>
+			<div class="mt-5 bg-danger-500/10 border border-danger-500/30 rounded-card p-5">
+				<div class="font-sans font-semibold text-label text-danger-600">Can't reach the backend</div>
 				<div class="mt-1 font-sans text-xs text-danger-600 leading-snug">
 					{loadError}
 				</div>
 				<button
 					type="button"
 					on:click={load}
-					class="mt-3 px-3 py-1.5 rounded-lg bg-danger-600 text-white font-sans font-medium text-[12px] border-none hover:bg-danger-600"
+					class="mt-3 px-3 py-1.5 rounded-lg bg-danger-600 text-white font-sans font-medium text-label border-none hover:bg-danger-600"
 				>
 					Retry
 				</button>
 			</div>
 		{/if}
 
-		<div class="mt-7 bg-white border border-surface-300 rounded-2xl p-5 shadow-sm">
-			<div class="font-sans font-semibold text-[13px] text-surface-700">Profile</div>
+		<div class="mt-7 bg-white border border-surface-300 rounded-card p-5 shadow-card">
+			<div class="font-sans font-semibold text-label text-surface-700">Profile</div>
 			{#if user}
 				<div class="mt-3.5 flex items-center gap-[14px]">
 					<span class="w-11 h-11 rounded-full bg-surface-900 text-white inline-flex items-center justify-center font-sans font-semibold text-sm">
 						{(user.name || '?').slice(0, 2).toUpperCase()}
 					</span>
-					<div class="font-mono text-[11px] text-surface-500">{user.email}</div>
+					<div class="font-mono text-micro text-surface-500">{user.email}</div>
 				</div>
 				<div class="mt-4 flex flex-col gap-3">
 					<label class="flex flex-col gap-1">
-						<span class="font-sans text-[11px] text-surface-500">Name</span>
+						<span class="font-sans text-micro text-surface-500">Name</span>
 						<input
 							type="text"
 							bind:value={editName}
@@ -338,7 +338,7 @@
 						/>
 					</label>
 					<label class="flex flex-col gap-1">
-						<span class="font-sans text-[11px] text-surface-500">Phone</span>
+						<span class="font-sans text-micro text-surface-500">Phone</span>
 						<input
 							type="text"
 							placeholder="+1 (555) 555-0100"
@@ -351,7 +351,7 @@
 							type="button"
 							disabled={!profileDirty || savingProfile}
 							on:click={saveProfile}
-							class="px-4 py-2 rounded-lg bg-surface-900 text-white font-sans font-medium text-[13px] border-none cursor-pointer hover:bg-surface-800 disabled:opacity-40 disabled:cursor-default"
+							class="px-4 py-2 rounded-lg bg-surface-900 text-white font-sans font-medium text-label border-none cursor-pointer hover:bg-surface-800 disabled:opacity-40 disabled:cursor-default"
 						>
 							{savingProfile ? 'Saving…' : 'Save'}
 						</button>
@@ -361,10 +361,10 @@
 		</div>
 
 		{#if $isOwner}
-		<div class="mt-5 bg-white border border-surface-300 rounded-2xl p-5 shadow-sm">
+		<div class="mt-5 bg-white border border-surface-300 rounded-card p-5 shadow-card">
 			<div class="flex justify-between items-start gap-4">
 				<span class="flex-1">
-						<span class="block font-sans font-semibold text-[13px] text-surface-700">Default autonomy</span>
+						<span class="block font-sans font-semibold text-label text-surface-700">Default autonomy</span>
 						<span class="block mt-[3px] font-sans text-xs leading-snug text-surface-500">
 							What the agent should do when it sees an incident for the first time.
 						</span>
@@ -373,22 +373,22 @@
 				</div>
 			</div>
 
-		<div class="mt-5 bg-white border border-surface-300 rounded-2xl p-5 shadow-sm">
-			<div class="font-sans font-semibold text-[13px] text-surface-700">LLM diagnosis</div>
+		<div class="mt-5 bg-white border border-surface-300 rounded-card p-5 shadow-card">
+			<div class="font-sans font-semibold text-label text-surface-700">LLM diagnosis</div>
 			<div class="mt-1 font-sans text-xs leading-snug text-surface-500">
 				Add a DeepSeek API key to get AI-powered root-cause analysis when an incident opens.
 			</div>
 			{#if settings?.llm_api_key}
 				<div class="mt-3.5 flex flex-col gap-2">
-					<div class="font-sans text-[13px] text-surface-700">Configured provider</div>
+					<div class="font-sans text-label text-surface-700">Configured provider</div>
 					<div class="bg-white border border-surface-300 rounded-xl px-4 py-3.5 flex items-center gap-3.5">
 						<span class="w-[7px] h-[7px] rounded-full flex-shrink-0 bg-success-500"></span>
 						<div class="flex-1 min-w-0">
 							<div class="flex items-center gap-2">
 								<div class="font-mono font-medium text-sm text-surface-900 truncate">{settings.llm_provider}</div>
-								<span class="px-1.5 py-0.5 rounded bg-surface-100 text-surface-600 font-mono text-[10px] uppercase tracking-wide">{settings.llm_model}</span>
+								<span class="px-1.5 py-0.5 rounded bg-surface-100 text-surface-600 font-mono text-micro uppercase tracking-wide">{settings.llm_model}</span>
 							</div>
-							<div class="mt-[3px] font-mono text-[11px] text-surface-500 truncate">
+							<div class="mt-[3px] font-mono text-micro text-surface-500 truncate">
 								API key {settings.llm_api_key}
 							</div>
 						</div>
@@ -397,7 +397,7 @@
 			{/if}
 			<div class="mt-3.5 flex flex-col gap-3">
 				<label class="flex flex-col gap-1">
-					<span class="font-sans text-[11px] text-surface-500">Provider</span>
+					<span class="font-sans text-micro text-surface-500">Provider</span>
 					<select
 						bind:value={editLlmProvider}
 						class="px-3 py-2 rounded-lg bg-white border border-surface-300 font-sans text-sm text-surface-900 focus:outline-none focus:border-surface-500"
@@ -407,7 +407,7 @@
 					</select>
 				</label>
 				<label class="flex flex-col gap-1">
-					<span class="font-sans text-[11px] text-surface-500">Model</span>
+					<span class="font-sans text-micro text-surface-500">Model</span>
 					{#if editLlmProvider === 'openrouter'}
 						<input
 							type="text"
@@ -426,7 +426,7 @@
 					{/if}
 				</label>
 				<label class="flex flex-col gap-1">
-					<span class="font-sans text-[11px] text-surface-500">{llmApiKeyLabel}</span>
+					<span class="font-sans text-micro text-surface-500">{llmApiKeyLabel}</span>
 					<input
 						type="password"
 						placeholder={settings?.llm_api_key ? 'Enter a new key to replace the saved one' : 'sk-...'}
@@ -436,7 +436,7 @@
 				</label>
 				<div class="flex justify-between items-center">
 					{#if llmSavedMessage}
-						<span class="font-sans text-[12px] text-success-600">{llmSavedMessage}</span>
+						<span class="font-sans text-label text-success-600">{llmSavedMessage}</span>
 					{:else}
 						<span></span>
 					{/if}
@@ -444,7 +444,7 @@
 						type="button"
 						disabled={savingLlm || !llmSettingsDirty}
 						on:click={saveLlmSettings}
-						class="px-4 py-2 rounded-lg bg-surface-900 text-white font-sans font-medium text-[13px] border-none cursor-pointer hover:bg-surface-800 disabled:opacity-40 disabled:cursor-default"
+						class="px-4 py-2 rounded-lg bg-surface-900 text-white font-sans font-medium text-label border-none cursor-pointer hover:bg-surface-800 disabled:opacity-40 disabled:cursor-default"
 					>
 						{savingLlm ? 'Saving…' : 'Save'}
 					</button>
@@ -453,23 +453,23 @@
 		</div>
 
 
-			<div class="mt-5 bg-white border border-surface-300 rounded-2xl p-5 shadow-sm">
-				<div class="font-sans font-semibold text-[13px] text-surface-700">Connected servers</div>
+			<div class="mt-5 bg-white border border-surface-300 rounded-card p-5 shadow-card">
+				<div class="font-sans font-semibold text-label text-surface-700">Connected servers</div>
 				<div class="mt-1 font-sans text-xs leading-snug text-surface-500">
 					Install the open-source agent on each server you want to monitor. The agent reports containers and runs <span class="font-mono">docker restart</span> when asked.
 				</div>
 				<div class="mt-3.5 flex flex-col gap-2.5">
 					{#each hosts as host (host.id)}
 						<div class="bg-white border border-surface-300 rounded-xl px-4 py-3.5">
-							<div class="flex items-center justify-between gap-3">
+							<div class="flex flex-wrap items-center justify-between gap-3">
 								<div class="min-w-0">
 									<div class="flex items-center gap-2">
 										<span class="font-mono font-medium text-sm text-surface-900 truncate">{host.name}</span>
 										{#if host.agent_outdated}
-											<span class="flex-shrink-0 px-1.5 py-0.5 rounded bg-warning-500/15 text-warning-600 font-sans text-[10px] font-medium" title="Re-run the install command to update this agent">agent out of date</span>
+											<span class="flex-shrink-0 px-1.5 py-0.5 rounded bg-warning-500/15 text-warning-600 font-sans text-micro font-medium" title="Re-run the install command to update this agent">agent out of date</span>
 										{/if}
 									</div>
-									<div class="mt-[3px] font-mono text-[11px] text-surface-500">
+									<div class="mt-[3px] font-mono text-micro text-surface-500">
 										{host.token_preview}
 										{#if host.last_seen_at}
 											· seen {new Date(host.last_seen_at).toLocaleString()}
@@ -483,7 +483,7 @@
 										value={host.autonomy ?? ''}
 										on:change={(e) => setHostAutonomy(host.id, e.currentTarget.value)}
 										title="Autonomy for this server"
-										class="px-2 py-1.5 rounded-lg bg-white border border-surface-300 font-sans text-[12px] text-surface-700 focus:outline-none focus:border-surface-500"
+										class="px-2 py-1.5 rounded-lg bg-white border border-surface-300 font-sans text-label text-surface-700 focus:outline-none focus:border-surface-500"
 									>
 										<option value="">Fleet default</option>
 										<option value="auto_fix">Auto-fix</option>
@@ -497,14 +497,14 @@
 												installBackendUrl = host.install_backend_url ?? serverUrl;
 											}
 										}}
-										class="px-3 py-1.5 rounded-lg bg-surface-100 text-surface-700 font-sans font-medium text-[12px] border border-surface-300 hover:bg-surface-200"
+										class="px-3 py-1.5 rounded-lg bg-surface-100 text-surface-700 font-sans font-medium text-label border border-surface-300 hover:bg-surface-200"
 									>
 										{showHostCommandId === host.id ? 'Hide' : 'Install'}
 									</button>
 									<button
 										type="button"
 										on:click={() => removeHost(host.id)}
-										class="px-3 py-1.5 rounded-lg text-danger-600 font-sans font-medium text-[12px] border border-surface-300 hover:bg-danger-500/10"
+										class="px-3 py-1.5 rounded-lg text-danger-600 font-sans font-medium text-label border border-surface-300 hover:bg-danger-500/10"
 									>
 										Remove
 									</button>
@@ -512,15 +512,15 @@
 							</div>
 							{#if showHostCommandId === host.id}
 								<div class="mt-3">
-									<div class="font-sans text-[11px] text-surface-600 mb-1.5">
+									<div class="font-sans text-micro text-surface-600 mb-1.5">
 										Run this on <span class="font-semibold">{host.name}</span>:
 									</div>
-									<div class="bg-surface-900 text-surface-100 rounded-lg p-3 font-mono text-[11px] overflow-x-auto whitespace-pre-wrap">
+									<div class="bg-surface-900 text-surface-100 rounded-lg p-3 font-mono text-micro overflow-x-auto whitespace-pre-wrap">
 										{installCommand(host)}
 									</div>
 									<div class="mt-2 flex flex-col gap-2">
 										<label class="flex flex-col gap-1">
-											<span class="font-sans text-[11px] text-surface-500">Backend URL</span>
+											<span class="font-sans text-micro text-surface-500">Backend URL</span>
 											<input
 												type="url"
 												bind:value={installBackendUrl}
@@ -532,7 +532,7 @@
 											<button
 												type="button"
 												on:click={() => copyCommand(host)}
-												class="px-3 py-1.5 rounded-lg bg-surface-900 text-white font-sans font-medium text-[12px] border-none hover:bg-surface-800"
+												class="px-3 py-1.5 rounded-lg bg-surface-900 text-white font-sans font-medium text-label border-none hover:bg-surface-800"
 											>
 												{copied ? 'Copied!' : 'Copy command'}
 											</button>
@@ -549,15 +549,15 @@
 					{/if}
 				</div>
 				<div class="mt-4 pt-4 border-t border-surface-200">
-					<div class="font-sans font-semibold text-[13px] text-surface-700 mb-2">Add server</div>
+					<div class="font-sans font-semibold text-label text-surface-700 mb-2">Add server</div>
 					{#if addHostError}
-						<div class="mb-2 font-sans text-[11px] text-danger-600 bg-danger-500/10 rounded-lg px-3 py-2">
+						<div class="mb-2 font-sans text-micro text-danger-600 bg-danger-500/10 rounded-lg px-3 py-2">
 							{addHostError}
 						</div>
 					{/if}
 					<div class="flex flex-col gap-2">
 						<label class="flex flex-col gap-1">
-							<span class="font-sans text-[11px] text-surface-500">Backend URL</span>
+							<span class="font-sans text-micro text-surface-500">Backend URL</span>
 							<input
 								type="url"
 								bind:value={newHostBackendUrl}
@@ -576,7 +576,7 @@
 								type="button"
 								disabled={!newHostName.trim() || addingHost}
 								on:click={addHost}
-								class="px-4 py-2 rounded-lg bg-surface-900 text-white font-sans font-medium text-[13px] border-none cursor-pointer hover:bg-surface-800 disabled:opacity-40 disabled:cursor-default"
+								class="px-4 py-2 rounded-lg bg-surface-900 text-white font-sans font-medium text-label border-none cursor-pointer hover:bg-surface-800 disabled:opacity-40 disabled:cursor-default"
 							>
 								{addingHost ? 'Adding…' : 'Add server'}
 							</button>
@@ -585,8 +585,8 @@
 				</div>
 			</div>
 
-			<div class="mt-5 bg-white border border-surface-300 rounded-2xl p-5 shadow-sm">
-				<div class="font-sans font-semibold text-[13px] text-surface-700">Add URL service</div>
+			<div class="mt-5 bg-white border border-surface-300 rounded-card p-5 shadow-card">
+				<div class="font-sans font-semibold text-label text-surface-700">Add URL service</div>
 				<div class="mt-1 font-sans text-xs leading-snug text-surface-500">
 					Or monitor an external endpoint (not a server) with a URL health check.
 				</div>
@@ -610,7 +610,7 @@
 							type="button"
 							disabled={!newUrlName.trim() || !newUrl.trim() || addingUrl}
 							on:click={addUrlService}
-							class="px-4 py-2 rounded-lg bg-surface-900 text-white font-sans font-medium text-[13px] border-none cursor-pointer hover:bg-surface-800 disabled:opacity-40 disabled:cursor-default"
+							class="px-4 py-2 rounded-lg bg-surface-900 text-white font-sans font-medium text-label border-none cursor-pointer hover:bg-surface-800 disabled:opacity-40 disabled:cursor-default"
 						>
 							{addingUrl ? 'Adding…' : 'Add URL service'}
 						</button>
@@ -618,8 +618,8 @@
 				</div>
 			</div>
 
-		<div class="mt-5 bg-white border border-surface-300 rounded-2xl p-5 shadow-sm">
-			<div class="font-sans font-semibold text-[13px] text-surface-700">Team</div>
+		<div class="mt-5 bg-white border border-surface-300 rounded-card p-5 shadow-card">
+			<div class="font-sans font-semibold text-label text-surface-700">Team</div>
 			<div class="mt-1 font-sans text-xs leading-snug text-surface-500">
 				People who can sign in. Operators act on incidents but can't change settings. Scope each operator to specific servers below — or leave it open for full access.
 			</div>
@@ -629,18 +629,18 @@
 						<div class="flex items-center justify-between gap-3">
 							<div class="min-w-0">
 								<div class="font-sans font-medium text-sm text-surface-900 truncate">{member.name}</div>
-								<div class="mt-[2px] font-mono text-[11px] text-surface-500 truncate">{member.email}</div>
+								<div class="mt-[2px] font-mono text-micro text-surface-500 truncate">{member.email}</div>
 							</div>
 							<div class="flex items-center gap-2 flex-shrink-0">
-								<span class="px-2 py-0.5 rounded-full bg-surface-100 text-surface-600 font-mono text-[10px] uppercase tracking-wide">{member.role}</span>
+								<span class="px-2 py-0.5 rounded-full bg-surface-100 text-surface-600 font-mono text-micro uppercase tracking-wide">{member.role}</span>
 								{#if member.role !== 'owner'}
-									<button type="button" on:click={() => removeMember(member.id)} class="px-3 py-1.5 rounded-lg text-danger-600 font-sans font-medium text-[12px] border border-surface-300 hover:bg-danger-500/10">Remove</button>
+									<button type="button" on:click={() => removeMember(member.id)} class="px-3 py-1.5 rounded-lg text-danger-600 font-sans font-medium text-label border border-surface-300 hover:bg-danger-500/10">Remove</button>
 								{/if}
 							</div>
 						</div>
 						{#if member.role === 'operator' && hosts.length}
 							<div class="mt-3 pt-3 border-t border-surface-100">
-								<div class="font-sans text-[11px] text-surface-500 mb-1.5">
+								<div class="font-sans text-micro text-surface-500 mb-1.5">
 									{(memberServers[member.id]?.length ?? 0) === 0
 										? 'Server access: all servers'
 										: `Server access: ${memberServers[member.id].length} of ${hosts.length} servers`}
@@ -652,11 +652,11 @@
 											type="button"
 											on:click={() => toggleMemberServer(member.id, host.id)}
 											title={on ? 'Allowed — click to revoke' : 'Click to allow this server'}
-											class="px-2 py-0.5 rounded-md font-mono text-[11px] border cursor-pointer {on ? 'bg-surface-900 text-white border-surface-900' : 'bg-white text-surface-600 border-surface-300 hover:bg-surface-50'}"
+											class="px-2 py-0.5 rounded-md font-mono text-micro border cursor-pointer {on ? 'bg-surface-900 text-white border-surface-900' : 'bg-white text-surface-600 border-surface-300 hover:bg-surface-50'}"
 										>{host.name}</button>
 									{/each}
 								</div>
-								<div class="mt-1.5 font-sans text-[11px] text-surface-400">No servers selected means full access.</div>
+								<div class="mt-1.5 font-sans text-micro text-surface-400">No servers selected means full access.</div>
 							</div>
 						{/if}
 					</div>
@@ -666,16 +666,16 @@
 				{/if}
 			</div>
 			<div class="mt-4 pt-4 border-t border-surface-200">
-				<div class="font-sans font-semibold text-[13px] text-surface-700 mb-2">Add operator</div>
+				<div class="font-sans font-semibold text-label text-surface-700 mb-2">Add operator</div>
 				{#if teamError}
-					<div class="mb-2 font-sans text-[11px] text-danger-600 bg-danger-500/10 rounded-lg px-3 py-2">{teamError}</div>
+					<div class="mb-2 font-sans text-micro text-danger-600 bg-danger-500/10 rounded-lg px-3 py-2">{teamError}</div>
 				{/if}
 				<div class="flex flex-col gap-2">
 					<input type="text" placeholder="Name" bind:value={newMemberName} class="px-3 py-2 rounded-lg bg-white border border-surface-300 font-sans text-sm text-surface-900 focus:outline-none focus:border-surface-500" />
 					<input type="email" placeholder="friend@example.com" bind:value={newMemberEmail} class="px-3 py-2 rounded-lg bg-white border border-surface-300 font-mono text-sm text-surface-900 focus:outline-none focus:border-surface-500" />
 					<div class="flex gap-2">
 						<input type="password" placeholder="Password" bind:value={newMemberPassword} class="flex-1 px-3 py-2 rounded-lg bg-white border border-surface-300 font-mono text-sm text-surface-900 focus:outline-none focus:border-surface-500" />
-						<button type="button" disabled={!newMemberName.trim() || !newMemberEmail.trim() || !newMemberPassword || addingMember} on:click={addMember} class="px-4 py-2 rounded-lg bg-surface-900 text-white font-sans font-medium text-[13px] border-none cursor-pointer hover:bg-surface-800 disabled:opacity-40 disabled:cursor-default">{addingMember ? 'Adding…' : 'Add'}</button>
+						<button type="button" disabled={!newMemberName.trim() || !newMemberEmail.trim() || !newMemberPassword || addingMember} on:click={addMember} class="px-4 py-2 rounded-lg bg-surface-900 text-white font-sans font-medium text-label border-none cursor-pointer hover:bg-surface-800 disabled:opacity-40 disabled:cursor-default">{addingMember ? 'Adding…' : 'Add'}</button>
 					</div>
 				</div>
 			</div>
