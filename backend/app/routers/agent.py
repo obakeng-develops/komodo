@@ -51,7 +51,12 @@ async def agent_beat(
     logger.info("host=%s beat received containers=%d restart_actions=%d", host.name, len(payload.containers), len(restart_actions))
     stream_manager.broadcast("services_changed", {})
     tail_logs, _ = monitor.should_tail_logs()
-    return AgentBeatResponse(restart=restart_actions, fetch_logs=fetch_logs, tail_logs=tail_logs)
+    # `actions` carries every approved action; `restart` is the restart-only
+    # subset so an older agent (which reads `restart`) never mis-runs a stop/start.
+    restart_only = [a for a in restart_actions if a.get("action") == "restart_container"]
+    return AgentBeatResponse(
+        actions=restart_actions, restart=restart_only, fetch_logs=fetch_logs, tail_logs=tail_logs
+    )
 
 
 @router.post("/logs")

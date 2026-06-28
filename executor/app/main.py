@@ -7,7 +7,7 @@ from pydantic import BaseModel
 
 from app.auth import validate_action_token, verify_internal_state
 from app.config import get_settings
-from app.dockerctl import list_containers, restart, stop, logs
+from app.dockerctl import list_containers, restart, start, stop, logs
 
 
 class ExecuteRequest(BaseModel):
@@ -38,10 +38,12 @@ async def _run_action(payload: dict) -> tuple[bool, str | None]:
     if action == "list_containers":
         cs = await list_containers()
         return True, json.dumps(cs)
-    if action in ("restart_container", "stop_container", "fetch_logs") and not container:
+    if action in ("restart_container", "stop_container", "start_container", "fetch_logs") and not container:
         return False, "container required"
     if action == "restart_container":
         return await restart(container), None
+    if action == "start_container":
+        return await start(container), None
     if action == "stop_container":
         if not get_settings().allow_simulate:
             return False, "simulate disabled"

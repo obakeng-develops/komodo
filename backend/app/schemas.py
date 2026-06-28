@@ -132,6 +132,9 @@ class AgentBeatPayload(BaseModel):
 
 
 class AgentBeatResponse(BaseModel):
+    # All approved actions ({"action", "container"}) for the new agent.
+    actions: list[dict[str, Any]] = []
+    # Restart-only subset, for older agents that only understand restarts.
     restart: list[dict[str, Any]]
     fetch_logs: list[str]
     tail_logs: bool = False
@@ -233,6 +236,7 @@ class ActiveIncidentState(BaseModel):
     service_name: str | None = None
     host_id: str | None = None
     method: str | None = None  # agent | docker | url — url can't be restarted
+    proposed_action: str | None = None  # restart_container | stop_container | start_container
     view: str  # resting | detecting | diagnosing | asking | fixing | verifying | resolved | takeover
     elapsed: int = 0
     autonomy: str

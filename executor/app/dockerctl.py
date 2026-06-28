@@ -80,6 +80,13 @@ async def stop(name: str) -> bool:
     return code == 0
 
 
+async def start(name: str) -> bool:
+    code, _, err = await _run("start", name)
+    if code != 0:
+        logger.warning("docker start %s failed: %s", name, err)
+    return code == 0
+
+
 async def logs(name: str, tail: int = 50) -> str | None:
     code, out, err = await _run("logs", "--tail", str(tail), name)
     if code != 0:
