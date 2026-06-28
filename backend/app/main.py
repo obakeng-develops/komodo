@@ -1,7 +1,9 @@
 from contextlib import asynccontextmanager
+from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 
 from app.config import get_settings
 from app.database import Base, engine
@@ -77,3 +79,19 @@ app.include_router(stream.router, prefix="/api/v1")
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+
+# Serve the built SvelteKit SPA (single origin with the API). Present only in the
+# combined image / production build; in local dev the frontend runs under Vite.
+STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
+if (STATIC_DIR / "index.html").exists():
+
+    @app.get("/{path:path}")
+    async def spa(path: str):
+        # /api/* and /health are matched above; keep unknown API paths as JSON 404s.
+        if path.startswith("api/"):
+            raise HTTPException(status_code=404, detail="Not found")
+        candidate = STATIC_DIR / path
+        if path and candidate.is_file():
+            return FileResponse(candidate)
+        return FileResponse(STATIC_DIR / "index.html")
