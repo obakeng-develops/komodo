@@ -21,6 +21,7 @@ The docs follow [Diátaxis](https://diataxis.fr/). Pick the door that matches wh
 - [Install the agent on a host](docs/how-to/install-the-agent.md)
 - [Choose an LLM provider](docs/how-to/choose-an-llm-provider.md)
 - [Manage your team](docs/how-to/manage-your-team.md)
+- [Add an executor type](docs/how-to/add-an-executor-type.md)
 - [Sign off before pushing](docs/how-to/sign-off-before-pushing.md)
 
 **Looking up.** You need a fact.
