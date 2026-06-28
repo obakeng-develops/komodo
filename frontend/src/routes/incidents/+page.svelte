@@ -5,6 +5,7 @@
 	import { api } from '$lib/api';
 	import { activeIncident, lastIncidentCreated } from '$lib/stream';
 	import IncidentCard from '$lib/components/IncidentCard.svelte';
+	import Button from '$lib/components/ui/Button.svelte';
 	import type { Incident, PaginatedIncidents } from '$lib/types';
 
 	let incidents: Incident[] = [];
@@ -61,28 +62,23 @@
 	$: tookN = incidents.filter((i) => i.status === 'escalated' || i.status === 'took_over').length;
 </script>
 
-<div class="px-10 py-9 pb-20">
+<div class="px-4 sm:px-10 py-7 sm:py-9 pb-20">
 	<div class="max-w-[760px] mx-auto">
-		<div class="flex justify-between items-baseline">
-			<div class="font-serif text-[28px] leading-none text-surface-900 tracking-tight">Incidents</div>
-			<div class="font-mono text-[11px] text-surface-500">All incidents · last 30 days</div>
+		<div class="flex flex-wrap gap-2 justify-between items-baseline">
+			<div class="font-serif text-title leading-none text-surface-900 tracking-tight">Incidents</div>
+			<div class="font-mono text-micro text-surface-500">All incidents · last 30 days</div>
 		</div>
 
 		{#if hasActive}
 			<div
-				class="mt-5 bg-white border border-surface-300 border-l-[3px] border-l-surface-900 rounded-xl px-5 py-4 flex justify-between items-center shadow-sm"
+				class="mt-5 bg-white border border-surface-300 border-l-[3px] border-l-surface-900 rounded-card px-5 py-4 flex flex-wrap gap-3 justify-between items-center shadow-sm"
 				in:fly={{ y: -10, duration: 250 }}
 			>
-				<div>
-					<div class="font-mono text-[11px] text-surface-900 tracking-widest uppercase">happening now</div>
-					<div class="mt-1.5 font-serif text-[19px] leading-snug text-surface-900">{activeText()}</div>
+				<div class="min-w-0">
+					<div class="font-mono text-micro text-surface-900 tracking-widest uppercase">happening now</div>
+					<div class="mt-1.5 font-serif text-heading leading-snug text-surface-900">{activeText()}</div>
 				</div>
-				<button
-					class="px-4 py-2 rounded-lg bg-surface-900 text-white font-sans font-medium text-[13px] border-none cursor-pointer hover:bg-surface-800 flex-shrink-0"
-					on:click={() => goto('/now')}
-				>
-					Open
-				</button>
+				<Button on:click={() => goto('/now')}>Open</Button>
 			</div>
 		{/if}
 
@@ -97,17 +93,13 @@
 
 		{#if hasMore}
 			<div class="mt-4 text-center">
-				<button
-					class="px-4 py-2 rounded-lg bg-white border border-surface-300 text-surface-700 font-sans text-sm cursor-pointer hover:bg-surface-50 disabled:opacity-50"
-					on:click={loadMore}
-					disabled={loading}
-				>
+				<Button variant="secondary" on:click={loadMore} disabled={loading}>
 					{loading ? 'Loading…' : 'Load more'}
-				</button>
+				</Button>
 			</div>
 		{/if}
 
-		<div class="mt-4 font-serif text-[13px] leading-relaxed text-surface-500">
+		<div class="mt-4 font-serif text-label leading-relaxed text-surface-500">
 			{incidents.length} incidents · {resolvedN} handled without you, {tookN} needed you.
 		</div>
 	</div>
