@@ -48,9 +48,11 @@ def _system_prompt(method: str) -> str:
     return (
         "You are an expert site-reliability engineer diagnosing an incident from a monitored service. "
         + _platform_guidance(method)
-        + " Be concise. Respond with exactly three lines in this format:\n"
+        + " Be concise. Respond with exactly four lines in this format:\n"
         "CAUSE: one-sentence likely root cause\n"
         "FIX: one concrete action within Komodo's abilities described above\n"
+        "ACTION: restart_container if a docker restart is the right fix, or none "
+        "if a restart won't help or there is nothing Komodo can run\n"
         "CONFIDENCE: low | medium | high\n"
         "Do not add extra commentary."
     )
@@ -79,12 +81,16 @@ def _user_prompt(context: dict) -> str:
 
 
 def _parse_response(text: str) -> dict:
-    result = {"diagnosis": None, "suggested_fix": None, "confidence": None}
+    result = {"diagnosis": None, "suggested_fix": None, "confidence": None, "action": None}
     for line in text.strip().splitlines():
         if line.startswith("CAUSE:"):
             result["diagnosis"] = line.replace("CAUSE:", "").strip()
         elif line.startswith("FIX:"):
             result["suggested_fix"] = line.replace("FIX:", "").strip()
+        elif line.startswith("ACTION:"):
+            raw = line.replace("ACTION:", "").strip().lower()
+            # The model only chooses; the server validates against the whitelist.
+            result["action"] = "restart_container" if "restart_container" in raw else "none"
         elif line.startswith("CONFIDENCE:"):
             raw = line.replace("CONFIDENCE:", "").strip().lower()
             if raw in ("low", "medium", "high"):

@@ -119,6 +119,7 @@ class ServiceMonitor:
         self._llm_diagnosis: str | None = None
         self._llm_suggested_fix: str | None = None
         self._llm_confidence: str | None = None
+        self._llm_action: str | None = None  # restart_container | none (model's pick)
         self._logs_arrived: asyncio.Event = asyncio.Event()
         self._llm_ready: asyncio.Event = asyncio.Event()
         self._awaiting_logs_task: asyncio.Task | None = None
@@ -455,6 +456,10 @@ class ServiceMonitor:
                             self._llm_diagnosis = result["diagnosis"]
                             self._llm_suggested_fix = result["suggested_fix"]
                             self._llm_confidence = result["confidence"]
+                            # The model proposes; the server still validates against
+                            # the whitelist before anything runs. "none" means the
+                            # model judged a restart won't help. See issue #44.
+                            self._llm_action = result.get("action")
                         self._llm_ready.set()
                         self._broadcast_state()
         finally:
@@ -536,6 +541,7 @@ class ServiceMonitor:
         self._proposed_fix = target.allowed_fix_action.get("container") if isinstance(target.allowed_fix_action, dict) else target.name
         self._proposed_fix_action = target.allowed_fix_action if isinstance(target.allowed_fix_action, dict) else {"action": "restart_container", "container": target.name}
         self._elapsed = 0  # fresh incident; the verify timer starts at the restart
+        self._llm_action = None
         self._logs_arrived.clear()
         self._llm_ready.clear()
 
@@ -633,7 +639,12 @@ class ServiceMonitor:
             pass
         async with self._lock:
             if self._view in ("detecting", "diagnosing") and self._incident_id:
-                await self._do_restart()
+                if self._llm_action == "none":
+                    # The model judged a restart won't help — don't auto-restart
+                    # into the same failure; hand it to a person. See issue #44.
+                    await self._finish("escalated", "A restart likely won't fix this — handed to you")
+                else:
+                    await self._do_restart()
                 self._broadcast_state()
 
     async def _do_restart(self):
@@ -780,6 +791,7 @@ class ServiceMonitor:
         self._llm_diagnosis = None
         self._llm_suggested_fix = None
         self._llm_confidence = None
+        self._llm_action = None
         self._elapsed = 0
         if self._awaiting_logs_task and not self._awaiting_logs_task.done():
             self._awaiting_logs_task.cancel()
@@ -792,6 +804,7 @@ class ServiceMonitor:
         self._llm_diagnosis = None
         self._llm_suggested_fix = None
         self._llm_confidence = None
+        self._llm_action = None
         if self._awaiting_logs_task and not self._awaiting_logs_task.done():
             self._awaiting_logs_task.cancel()
         self._awaiting_logs_task = None
@@ -986,8 +999,14 @@ class ServiceMonitor:
             view=self._view,
             elapsed=self._elapsed,
             autonomy=self._autonomy,
-            # A URL endpoint can't be restarted, so never offer approve-restart for it.
-            can_approve=self._view == "asking" and self._method != "url",
+            # Offer approve-restart only when it's actually runnable: at the ask
+            # step, not a URL (can't restart), and the model didn't say a restart
+            # won't help. See issues #33, #44.
+            can_approve=(
+                self._view == "asking"
+                and self._method != "url"
+                and self._llm_action != "none"
+            ),
             can_take_over=self._view in ("asking",) + ACTIVE_VIEWS,
             can_hand_back=self._view == "takeover",
             timeline=self._build_timeline(),
