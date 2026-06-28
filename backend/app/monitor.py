@@ -931,6 +931,7 @@ class ServiceMonitor:
             incident_id=self._incident_id,
             service_id=self._service_id,
             service_name=self._service_name,
+            host_id=self._host_id,
             view=self._view,
             elapsed=self._elapsed,
             autonomy=self._autonomy,
