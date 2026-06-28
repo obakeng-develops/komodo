@@ -110,6 +110,8 @@ class HostOut(BaseModel):
     last_seen_at: datetime | None = None
     created_at: datetime
     autonomy: str | None = None  # null = use the fleet-wide setting
+    agent_version: str | None = None
+    agent_outdated: bool = False
 
 
 class HostCreate(BaseModel):
@@ -122,6 +124,7 @@ class HostUpdate(BaseModel):
 
 class AgentBeatPayload(BaseModel):
     containers: list[dict[str, Any]]
+    agent_version: str | None = None
 
 
 class AgentBeatResponse(BaseModel):
