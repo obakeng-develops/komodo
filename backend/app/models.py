@@ -116,7 +116,12 @@ class Incident(Base):
 
     user = relationship("User", back_populates="incidents")
     service = relationship("Service", back_populates="incidents")
-    events = relationship("IncidentEvent", back_populates="incident", order_by="IncidentEvent.timestamp")
+    events = relationship(
+        "IncidentEvent",
+        back_populates="incident",
+        order_by="IncidentEvent.timestamp",
+        cascade="all, delete-orphan",
+    )
 
 
 class IncidentEvent(Base):
