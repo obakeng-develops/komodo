@@ -10,7 +10,7 @@ from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from app.deps import get_current_user, get_db_session
+from app.deps import allowed_host_ids, get_current_user, get_db_session
 from app.models import Incident, Service, User
 
 router = APIRouter(prefix="/fleet", tags=["fleet"])
@@ -51,12 +51,15 @@ def get_fleet(
     window_hours: int = Query(168, ge=1, le=720),
     db: Session = Depends(get_db_session),
     user: User = Depends(get_current_user),
+    allowed: set[str] | None = Depends(allowed_host_ids),
 ):
     now = datetime.utcnow()
     window_start = now - timedelta(hours=window_hours)
     window_seconds = window_hours * 3600
 
     services = db.query(Service).filter(Service.user_id == user.id).all()
+    if allowed is not None:
+        services = [s for s in services if s.host_id in allowed]
     incidents = (
         db.query(Incident)
         .filter(

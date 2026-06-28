@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
-from app.deps import current_identity, get_current_user
+from app.deps import allowed_host_ids, current_identity, get_current_user, host_allowed
 from app.database import get_db
-from app.models import Incident, IncidentEvent, User
+from app.models import Incident, IncidentEvent, Service, User
 from app.pagination import paginate
 from app.schemas import (
     CursorParams,
@@ -23,15 +23,30 @@ def _require_active_incident(incident_id: str):
         raise HTTPException(status_code=409, detail="Incident is not the active incident")
 
 
+def _authorize_host(incident_id: str, db: Session, allowed: set[str] | None):
+    """403 if the caller's server access doesn't cover this incident's host."""
+    if allowed is None:
+        return
+    inc = db.query(Incident).filter(Incident.id == incident_id).first()
+    host_id = inc.service.host_id if inc and inc.service else None
+    if not host_allowed(allowed, host_id):
+        raise HTTPException(status_code=403, detail="Not permitted for this server")
+
+
 @router.get("", response_model=PaginatedIncidents)
 def list_incidents(
     cursor: str | None = Query(None),
     limit: int = Query(20, ge=1, le=100),
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
+    allowed: set[str] | None = Depends(allowed_host_ids),
 ):
     params = CursorParams(cursor=cursor, limit=limit)
     query = db.query(Incident).filter(Incident.user_id == user.id)
+    if allowed is not None:
+        query = query.join(Service, Incident.service_id == Service.id).filter(
+            Service.host_id.in_(allowed)
+        )
     items, next_cursor, has_more = paginate(
         db,
         query,
@@ -57,11 +72,14 @@ def get_incident(
     include: str | None = Query(None),
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
+    allowed: set[str] | None = Depends(allowed_host_ids),
 ):
     incident = (
         db.query(Incident).filter(Incident.id == incident_id, Incident.user_id == user.id).first()
     )
     if not incident:
+        raise HTTPException(status_code=404, detail="Incident not found")
+    if not host_allowed(allowed, incident.service.host_id if incident.service else None):
         raise HTTPException(status_code=404, detail="Incident not found")
 
     service_names = {s.id: s.name for s in user.services}
@@ -77,11 +95,14 @@ def list_incident_events(
     incident_id: str,
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
+    allowed: set[str] | None = Depends(allowed_host_ids),
 ):
     incident = (
         db.query(Incident).filter(Incident.id == incident_id, Incident.user_id == user.id).first()
     )
     if not incident:
+        raise HTTPException(status_code=404, detail="Incident not found")
+    if not host_allowed(allowed, incident.service.host_id if incident.service else None):
         raise HTTPException(status_code=404, detail="Incident not found")
     return [IncidentEventOut.model_validate(e) for e in incident.events]
 
@@ -90,8 +111,11 @@ def list_incident_events(
 async def approve_incident(
     incident_id: str,
     user: User = Depends(current_identity),
+    db: Session = Depends(get_db),
+    allowed: set[str] | None = Depends(allowed_host_ids),
 ):
     _require_active_incident(incident_id)
+    _authorize_host(incident_id, db, allowed)
     state = await monitor.approve()
     return state
 
@@ -100,8 +124,11 @@ async def approve_incident(
 async def take_over_incident(
     incident_id: str,
     user: User = Depends(current_identity),
+    db: Session = Depends(get_db),
+    allowed: set[str] | None = Depends(allowed_host_ids),
 ):
     _require_active_incident(incident_id)
+    _authorize_host(incident_id, db, allowed)
     state = await monitor.take_over()
     return state
 
@@ -110,8 +137,11 @@ async def take_over_incident(
 async def resolve_incident(
     incident_id: str,
     user: User = Depends(current_identity),
+    db: Session = Depends(get_db),
+    allowed: set[str] | None = Depends(allowed_host_ids),
 ):
     _require_active_incident(incident_id)
+    _authorize_host(incident_id, db, allowed)
     state = await monitor.resolve(manual=True)
     return state
 
@@ -120,7 +150,10 @@ async def resolve_incident(
 async def hand_back_incident(
     incident_id: str,
     user: User = Depends(current_identity),
+    db: Session = Depends(get_db),
+    allowed: set[str] | None = Depends(allowed_host_ids),
 ):
     _require_active_incident(incident_id)
+    _authorize_host(incident_id, db, allowed)
     state = await monitor.hand_back()
     return state

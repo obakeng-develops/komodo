@@ -111,12 +111,26 @@
 		}
 	}
 
+	let memberServers: Record<string, string[]> = {};
+
 	async function loadTeam() {
 		try {
 			teamMembers = await api.team.list();
+			const operators = teamMembers.filter((m) => m.role === 'operator');
+			const grants = await Promise.all(operators.map((m) => api.team.getServers(m.id)));
+			const next: Record<string, string[]> = {};
+			operators.forEach((m, i) => (next[m.id] = grants[i]));
+			memberServers = next;
 		} catch (e) {
 			console.error('team list failed', e);
 		}
+	}
+
+	async function toggleMemberServer(memberId: string, hostId: string) {
+		const cur = memberServers[memberId] ?? [];
+		const next = cur.includes(hostId) ? cur.filter((h) => h !== hostId) : [...cur, hostId];
+		const saved = await api.team.setServers(memberId, next);
+		memberServers = { ...memberServers, [memberId]: saved };
 	}
 
 	async function addMember() {
@@ -607,21 +621,44 @@
 		<div class="mt-5 bg-white border border-surface-300 rounded-2xl p-5 shadow-sm">
 			<div class="font-sans font-semibold text-[13px] text-surface-700">Team</div>
 			<div class="mt-1 font-sans text-xs leading-snug text-surface-500">
-				People who can sign in. Operators can view the fleet and act on incidents, but can't change settings or servers.
+				People who can sign in. Operators act on incidents but can't change settings. Scope each operator to specific servers below — or leave it open for full access.
 			</div>
 			<div class="mt-3.5 flex flex-col gap-2.5">
 				{#each teamMembers as member (member.id)}
-					<div class="bg-white border border-surface-300 rounded-xl px-4 py-3 flex items-center justify-between gap-3">
-						<div class="min-w-0">
-							<div class="font-sans font-medium text-sm text-surface-900 truncate">{member.name}</div>
-							<div class="mt-[2px] font-mono text-[11px] text-surface-500 truncate">{member.email}</div>
+					<div class="bg-white border border-surface-300 rounded-xl px-4 py-3">
+						<div class="flex items-center justify-between gap-3">
+							<div class="min-w-0">
+								<div class="font-sans font-medium text-sm text-surface-900 truncate">{member.name}</div>
+								<div class="mt-[2px] font-mono text-[11px] text-surface-500 truncate">{member.email}</div>
+							</div>
+							<div class="flex items-center gap-2 flex-shrink-0">
+								<span class="px-2 py-0.5 rounded-full bg-surface-100 text-surface-600 font-mono text-[10px] uppercase tracking-wide">{member.role}</span>
+								{#if member.role !== 'owner'}
+									<button type="button" on:click={() => removeMember(member.id)} class="px-3 py-1.5 rounded-lg text-danger-600 font-sans font-medium text-[12px] border border-surface-300 hover:bg-danger-500/10">Remove</button>
+								{/if}
+							</div>
 						</div>
-						<div class="flex items-center gap-2 flex-shrink-0">
-							<span class="px-2 py-0.5 rounded-full bg-surface-100 text-surface-600 font-mono text-[10px] uppercase tracking-wide">{member.role}</span>
-							{#if member.role !== 'owner'}
-								<button type="button" on:click={() => removeMember(member.id)} class="px-3 py-1.5 rounded-lg text-danger-600 font-sans font-medium text-[12px] border border-surface-300 hover:bg-danger-500/10">Remove</button>
-							{/if}
-						</div>
+						{#if member.role === 'operator' && hosts.length}
+							<div class="mt-3 pt-3 border-t border-surface-100">
+								<div class="font-sans text-[11px] text-surface-500 mb-1.5">
+									{(memberServers[member.id]?.length ?? 0) === 0
+										? 'Server access: all servers'
+										: `Server access: ${memberServers[member.id].length} of ${hosts.length} servers`}
+								</div>
+								<div class="flex flex-wrap gap-1.5">
+									{#each hosts as host (host.id)}
+										{@const on = (memberServers[member.id] ?? []).includes(host.id)}
+										<button
+											type="button"
+											on:click={() => toggleMemberServer(member.id, host.id)}
+											title={on ? 'Allowed — click to revoke' : 'Click to allow this server'}
+											class="px-2 py-0.5 rounded-md font-mono text-[11px] border cursor-pointer {on ? 'bg-surface-900 text-white border-surface-900' : 'bg-white text-surface-600 border-surface-300 hover:bg-surface-50'}"
+										>{host.name}</button>
+									{/each}
+								</div>
+								<div class="mt-1.5 font-sans text-[11px] text-surface-400">No servers selected means full access.</div>
+							</div>
+						{/if}
 					</div>
 				{/each}
 				{#if !teamMembers.some((m) => m.role === 'operator')}
