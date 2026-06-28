@@ -1,0 +1,88 @@
+services:
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      APP_ORIGIN: ${APP_ORIGIN:-localhost}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - frontend
+      - backend
+
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: komodo
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-komodo}
+      POSTGRES_DB: komodo
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U komodo"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  llm-service:
+    build: ./llm-service
+    restart: unless-stopped
+    environment:
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY}
+      DEFAULT_PROVIDER: ${LLM_PROVIDER:-deepseek}
+      DEFAULT_MODEL: ${LLM_MODEL:-deepseek-v4-pro}
+
+  executor:
+    build: ./executor
+    restart: unless-stopped
+    privileged: true
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./secrets/executor.pub:/keys/executor.pub:ro
+    environment:
+      PUBLIC_KEY_FILE: /keys/executor.pub
+      ALLOW_SIMULATE: "false"
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    volumes:
+      - ./secrets/executor.key:/keys/executor.key:ro
+    environment:
+      DATABASE_URL: postgresql+psycopg://komodo:${POSTGRES_PASSWORD:-komodo}@postgres:5432/komodo
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY}
+      LLM_SERVICE_URL: http://llm-service:8001
+      EXECUTOR_SIGNING_KEY_FILE: /keys/executor.key
+      ALLOW_SIMULATE: "false"
+      AUTH_SECRET: ${AUTH_SECRET}
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+      SETUP_TOKEN: ${SETUP_TOKEN:-}
+      # Optional headless owner bootstrap; leave blank to use the first-run setup page.
+      OWNER_EMAIL: ${OWNER_EMAIL:-}
+      OWNER_PASSWORD: ${OWNER_PASSWORD:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      llm-service:
+        condition: service_started
+      executor:
+        condition: service_started
+
+  frontend:
+    build: ./frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
+  caddy_data:
+  caddy_config:

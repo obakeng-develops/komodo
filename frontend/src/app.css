@@ -1,0 +1,20 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html, body {
+    @apply m-0 bg-surface-100 text-surface-900 antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  * {
+    @apply box-border;
+  }
+  input {
+    @apply font-mono;
+  }
+  input:focus {
+    @apply outline-none;
+    border-color: theme('colors.accent.500') !important;
+  }
+}

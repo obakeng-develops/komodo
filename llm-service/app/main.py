@@ -1,0 +1,57 @@
+from contextlib import asynccontextmanager
+
+from fastapi import Depends, FastAPI, Header, HTTPException
+from pydantic import BaseModel
+
+from app.config import get_settings
+from app.llm import diagnose
+
+
+class DiagnoseRequest(BaseModel):
+    context: dict
+    api_key_encrypted: str | None = None
+    provider: str | None = None
+    model: str | None = None
+
+
+class DiagnoseResponse(BaseModel):
+    diagnosis: str | None = None
+    suggested_fix: str | None = None
+    confidence: str | None = None
+
+
+def _verify_internal_key(x_internal_api_key: str | None = Header(None)):
+    expected = get_settings().internal_api_key
+    if not expected:
+        raise HTTPException(status_code=500, detail="INTERNAL_API_KEY not configured")
+    if x_internal_api_key != expected:
+        raise HTTPException(status_code=401, detail="Invalid internal API key")
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    yield
+
+
+app = FastAPI(title="Komodo LLM Service", version="1.0.0", lifespan=lifespan)
+
+
+@app.post("/diagnose", response_model=DiagnoseResponse)
+async def diagnose_endpoint(
+    req: DiagnoseRequest,
+    _=Depends(_verify_internal_key),
+):
+    result = await diagnose(
+        req.context,
+        api_key_encrypted=req.api_key_encrypted,
+        provider=req.provider or get_settings().default_provider,
+        model=req.model or get_settings().default_model,
+    )
+    if not result:
+        return DiagnoseResponse()
+    return DiagnoseResponse(**result)
+
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
