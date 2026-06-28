@@ -3,9 +3,7 @@
 	import { api, ApiError } from '$lib/api';
 	import { servicesNeedRefresh, servicesStore } from '$lib/stream';
 	import { isOwner } from '$lib/auth';
-	import ServiceRow from '$lib/components/ServiceRow.svelte';
 	import AutonomyToggle from '$lib/components/AutonomyToggle.svelte';
-	import { groupByServer, serverRollup } from '$lib/grouping';
 	import type { Host, Service, TeamMember, User, UserSettings } from '$lib/types';
 
 	let user: User | null = null;
@@ -48,14 +46,6 @@
 	let savingLlm = false;
 	let llmSavedMessage: string | null = null;
 
-	$: serverGroups = groupByServer(services);
-	// A server is expanded by default only when it has something wrong, so a
-	// fleet of healthy servers stays compact. A click overrides the default.
-	let expandedOverride: Record<string, boolean> = {};
-	const isExpanded = (g: { name: string; down: number; degraded: number }) =>
-		expandedOverride[g.name] ?? (g.down > 0 || g.degraded > 0);
-	const toggleGroup = (g: { name: string; down: number; degraded: number }) =>
-		(expandedOverride = { ...expandedOverride, [g.name]: !isExpanded(g) });
 	$: autonomy = settings?.autonomy ?? 'auto_fix';
 	$: profileDirty = user && (editName.trim() !== user.name || editPhone.trim() !== (user.phone ?? ''));
 	$: llmSettingsDirty = settings && (
@@ -148,11 +138,6 @@
 	async function removeMember(id: string) {
 		await api.team.delete(id);
 		teamMembers = teamMembers.filter((m) => m.id !== id);
-	}
-
-	async function setWatchOnly(id: string, watch_only: boolean) {
-		const updated = await api.services.setWatchOnly(id, watch_only);
-		services = services.map((s) => (s.id === id ? updated : s));
 	}
 
 	async function updateAutonomy(e: CustomEvent<'auto_fix' | 'ask_first'>) {
@@ -298,10 +283,6 @@
 		}
 	}
 
-	async function removeService(id: string) {
-		await api.services.delete(id);
-		services = services.filter((s) => s.id !== id);
-	}
 </script>
 
 <div class="px-10 py-9 pb-20">
@@ -457,42 +438,6 @@
 			</div>
 		</div>
 
-			<div class="mt-5 bg-white border border-surface-300 rounded-2xl p-5 shadow-sm">
-				<div class="font-sans font-semibold text-[13px] text-surface-700">Watched services</div>
-				<div class="mt-1 font-sans text-xs leading-snug text-surface-500">
-					Add a server below and run the agent to see its Docker containers.
-				</div>
-				<div class="mt-3.5 flex flex-col gap-4">
-					{#each serverGroups as group (group.name)}
-						<div class="flex flex-col gap-2.5">
-							<button
-								type="button"
-								on:click={() => toggleGroup(group)}
-								class="flex items-center justify-between gap-3 bg-transparent border-none cursor-pointer text-left p-0 hover:opacity-70"
-							>
-								<span class="flex items-center gap-1.5 min-w-0">
-									<span class="text-surface-400 text-[10px]">{isExpanded(group) ? '▾' : '▸'}</span>
-									<span class="font-mono text-[11px] uppercase tracking-wide text-surface-500 truncate">{group.name}</span>
-									<span class="font-sans text-[11px] text-surface-400">{group.services.length}</span>
-								</span>
-								<span class="font-mono text-[11px] {group.down ? 'text-danger-600' : group.degraded ? 'text-surface-700' : 'text-surface-400'}">{serverRollup(group)}</span>
-							</button>
-							{#if isExpanded(group)}
-								{#each group.services as service (service.id)}
-									<ServiceRow
-										{service}
-										on:toggle={(e) => setWatchOnly(service.id, e.detail.watch_only)}
-										on:remove={() => removeService(service.id)}
-									/>
-								{/each}
-							{/if}
-						</div>
-					{/each}
-					{#if services.length === 0}
-						<div class="font-sans text-xs text-surface-500">No services yet — add a server below and run the agent.</div>
-					{/if}
-				</div>
-			</div>
 
 			<div class="mt-5 bg-white border border-surface-300 rounded-2xl p-5 shadow-sm">
 				<div class="font-sans font-semibold text-[13px] text-surface-700">Connected servers</div>
