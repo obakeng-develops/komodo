@@ -437,7 +437,15 @@ class ServiceMonitor:
         if cur and cur.status == "healthy":
             await self._finish("resolved", f"Restarted {self._container} — it came back healthy")
             return
-        if self._escalate_on and self._elapsed >= get_settings().docker_verify_timeout_seconds:
+        # Only the verify timer escalates here, and only once we've actually
+        # attempted a restart. During detecting/diagnosing (ask_first waiting on
+        # logs, the LLM, or a human) the incident must stay put — escalating then
+        # would skip the diagnosis entirely.
+        if (
+            self._view in ("fixing", "verifying")
+            and self._escalate_on
+            and self._elapsed >= get_settings().docker_verify_timeout_seconds
+        ):
             await self._finish("escalated", "Restart didn't bring it back in time — handed to you")
             return
         if self._view == "fixing":
@@ -478,6 +486,7 @@ class ServiceMonitor:
         self._tail_logs = target.method == "agent"
         self._proposed_fix = target.allowed_fix_action.get("container") if isinstance(target.allowed_fix_action, dict) else target.name
         self._proposed_fix_action = target.allowed_fix_action if isinstance(target.allowed_fix_action, dict) else {"action": "restart_container", "container": target.name}
+        self._elapsed = 0  # fresh incident; the verify timer starts at the restart
         self._logs_arrived.clear()
         self._llm_ready.clear()
 
