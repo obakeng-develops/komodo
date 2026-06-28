@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# Block a push when the quality gates fail. Bypass with `git push --no-verify`.
+# Enable once per clone:  git config core.hooksPath .githooks
+exec "$(git rev-parse --show-toplevel)/scripts/checks"
