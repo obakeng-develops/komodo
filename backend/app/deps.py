@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.config import get_settings
 from app.database import get_db
-from app.models import Host, User
+from app.models import Host, HostAccess, User
 
 get_db_session = get_db
 
@@ -58,6 +58,28 @@ def require_owner(identity: User = Depends(current_identity)) -> User:
 # Existing routers scope queries via `== user.id`; pointing get_current_user at
 # the fleet owner keeps all that working and scopes everyone to the one fleet.
 get_current_user = fleet_owner
+
+
+def allowed_host_ids(
+    identity: User = Depends(current_identity),
+    db: Session = Depends(get_db),
+) -> set[str] | None:
+    """The set of host ids the logged-in user may see and act on. None means
+    unrestricted: owners always, and operators with no grants (see issue #30)."""
+    if identity.role == "owner":
+        return None
+    rows = db.query(HostAccess.host_id).filter(HostAccess.user_id == identity.id).all()
+    ids = {r[0] for r in rows}
+    return ids or None
+
+
+def host_allowed(allowed: set[str] | None, host_id: str | None) -> bool:
+    """Whether a host (or a service's host) is visible given an allowed set.
+    Unrestricted sees everything; a restricted operator never sees hostless
+    (URL) services."""
+    if allowed is None:
+        return True
+    return host_id is not None and host_id in allowed
 
 
 def verify_agent_token(token: str, token_hash: str | None) -> bool:

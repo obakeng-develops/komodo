@@ -49,6 +49,10 @@ class TeamMemberOut(BaseModel):
     role: str
 
 
+class ServerAccessUpdate(BaseModel):
+    host_ids: list[str]  # empty = unrestricted (all servers)
+
+
 class UserSettingsOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: str
@@ -227,6 +231,7 @@ class ActiveIncidentState(BaseModel):
     incident_id: str | None = None
     service_id: str | None = None
     service_name: str | None = None
+    host_id: str | None = None
     view: str  # resting | detecting | diagnosing | asking | fixing | verifying | resolved | takeover
     elapsed: int = 0
     autonomy: str

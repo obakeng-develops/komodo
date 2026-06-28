@@ -28,6 +28,7 @@ class User(Base):
     incidents = relationship("Incident", back_populates="user")
     learnings = relationship("Learning", back_populates="user")
     guardrails = relationship("Guardrail", back_populates="user")
+    host_access = relationship("HostAccess", back_populates="user", cascade="all, delete-orphan")
 
 
 class Host(Base):
@@ -45,6 +46,7 @@ class Host(Base):
 
     user = relationship("User", back_populates="hosts")
     services = relationship("Service", back_populates="host")
+    access_grants = relationship("HostAccess", back_populates="host", cascade="all, delete-orphan")
 
 
 class UserSettings(Base):
@@ -169,5 +171,18 @@ class Guardrail(Base):
 
     user = relationship("User", back_populates="guardrails")
     service = relationship("Service", back_populates="guardrails")
+
+
+class HostAccess(Base):
+    """An operator's grant to see and act on one server. No rows for an operator
+    means unrestricted (all servers); any rows scope them to just those. Owners
+    are always unrestricted and never have rows. See issue #30."""
+    __tablename__ = "host_access"
+    id = Column(String, primary_key=True, default=gen_uuid)
+    user_id = Column(String, ForeignKey("users.id"), nullable=False)
+    host_id = Column(String, ForeignKey("hosts.id"), nullable=False)
+
+    user = relationship("User", back_populates="host_access")
+    host = relationship("Host", back_populates="access_grants")
 
 

@@ -92,6 +92,13 @@ export const api = {
         body: JSON.stringify({ email, name, password }),
       }),
     delete: (id: string) => request<void>(`/users/${id}`, { method: 'DELETE' }),
+    getServers: (id: string) => request<string[]>(`/users/${id}/servers`),
+    setServers: (id: string, host_ids: string[]) =>
+      request<string[]>(`/users/${id}/servers`, {
+        method: 'PUT',
+        body: JSON.stringify({ host_ids }),
+        headers: { 'Idempotency-Key': idempotencyKey() },
+      }),
   },
 
   me: () => request<User>('/me'),
