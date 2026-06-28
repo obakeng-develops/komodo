@@ -1,0 +1,76 @@
+# Deploy with fly.io
+
+This runs Komodo as one fly.io app: the combined image, where the backend serves the SPA and the
+API on a single origin. It pairs well with watching a fleet that lives elsewhere (a separate
+server), since you keep Komodo off that box.
+
+You need `flyctl` logged in (`fly auth login`) and the root `Dockerfile` from the combined-image
+change. The executor does not run on fly (a fly microVM has no host Docker socket); you watch a host
+with the [agent](install-the-agent.md), which restarts containers itself.
+
+## 1. Create the app and a database
+
+```bash
+fly apps create komodo            # pick a free name if taken
+fly postgres create --region jnb  # managed Postgres
+fly postgres attach komodo-db --app komodo   # sets DATABASE_URL on the app
+```
+
+## 2. Set the secrets
+
+Generate the random values with `./scripts/gen-secrets.sh` (you only need the three secrets here;
+no executor keypair, since there is no executor on fly).
+
+```bash
+fly secrets set --app komodo \
+  AUTH_SECRET=...        \
+  ENCRYPTION_KEY=...     \
+  INTERNAL_API_KEY=...   \
+  COOKIE_SECURE=true     \
+  SETUP_TOKEN=...
+```
+
+Leave `LLM_SERVICE_URL` unset to start. Komodo skips LLM diagnosis gracefully when it is missing;
+monitoring and restarts still work. Add the llm-service later (below).
+
+## 3. Deploy
+
+```bash
+fly deploy
+```
+
+## 4. Point your domain at it
+
+```bash
+fly certs create komodo.example.com --app komodo
+```
+
+Add the records fly prints (a CNAME, or A + AAAA) to your DNS. Once the certificate is issued, open
+`https://komodo.example.com`, complete the first-run owner setup (it asks for your `SETUP_TOKEN`),
+and add your LLM key in **Settings**.
+
+## 5. Watch a host
+
+Follow [Install the agent](install-the-agent.md) on the server you want monitored, pointing
+`--server` at your fly URL. Start in **ask-first** autonomy until you trust it.
+
+## Adding the llm-service (optional)
+
+Run the llm-service as a second, private fly app and point the web app at it.
+
+```bash
+cd llm-service
+fly apps create komodo-llm
+fly secrets set --app komodo-llm ENCRYPTION_KEY=<same> INTERNAL_API_KEY=<same>
+fly deploy
+```
+
+Then set `LLM_SERVICE_URL` on the web app to the private address:
+
+```bash
+fly secrets set --app komodo LLM_SERVICE_URL=http://komodo-llm.flycast:8001
+```
+
+Two notes: give the llm-service the **same** `ENCRYPTION_KEY` and `INTERNAL_API_KEY` as the web app,
+or the stored LLM key will not decrypt. And bind it on IPv6 so fly's private network can reach it
+(have its uvicorn listen on `::`, not just `0.0.0.0`).

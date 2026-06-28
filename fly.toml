@@ -1,0 +1,27 @@
+# fly.io config for the Komodo web app: the combined image (backend + SPA) on
+# one origin. Depends on the root Dockerfile (PR "Serve the SPA from the backend").
+# `app` names are global; rename if "komodo" is taken (fly launch will prompt).
+app = "komodo"
+primary_region = "jnb"  # Johannesburg, closest to the caready host
+
+[build]
+  dockerfile = "Dockerfile"
+
+[http_service]
+  internal_port = 8000
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [[http_service.checks]]
+    method = "GET"
+    path = "/health"
+    interval = "15s"
+    timeout = "5s"
+    grace_period = "10s"
+
+[[vm]]
+  memory = "512mb"
+  cpu_kind = "shared"
+  cpus = 1

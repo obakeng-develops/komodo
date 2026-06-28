@@ -16,6 +16,7 @@ The docs follow [Diátaxis](https://diataxis.fr/). Pick the door that matches wh
 
 **Doing.** You have a goal and want the steps.
 - [Deploy with Docker Compose](docs/how-to/deploy-with-docker-compose.md)
+- [Deploy with fly.io](docs/how-to/deploy-with-fly.md)
 - [Deploy with Kamal](docs/how-to/deploy-with-kamal.md)
 - [Install the agent on a host](docs/how-to/install-the-agent.md)
 - [Choose an LLM provider](docs/how-to/choose-an-llm-provider.md)
