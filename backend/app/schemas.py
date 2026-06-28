@@ -109,10 +109,15 @@ class HostOut(BaseModel):
     token_preview: str
     last_seen_at: datetime | None = None
     created_at: datetime
+    autonomy: str | None = None  # null = use the fleet-wide setting
 
 
 class HostCreate(BaseModel):
     name: str
+
+
+class HostUpdate(BaseModel):
+    autonomy: str | None = None  # "auto_fix" | "ask_first" | null to clear
 
 
 class AgentBeatPayload(BaseModel):

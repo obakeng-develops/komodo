@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.deps import get_current_user, get_db_session, hash_agent_token, require_owner
 from app.models import Host, User
-from app.schemas import HostCreate, HostOut
+from app.schemas import HostCreate, HostOut, HostUpdate
 from pydantic import BaseModel
 from datetime import datetime
 
@@ -34,6 +34,7 @@ def _host_out(host: Host) -> HostOut:
         token_preview=_token_preview(host.token_hash or host.token or ""),
         last_seen_at=host.last_seen_at,
         created_at=host.created_at,
+        autonomy=host.autonomy,
     )
 
 
@@ -73,6 +74,26 @@ def create_host(
         last_seen_at=host.last_seen_at,
         created_at=host.created_at,
     )
+
+
+@router.patch("/{host_id}", response_model=HostOut)
+def update_host(
+    host_id: str,
+    body: HostUpdate,
+    db: Session = Depends(get_db_session),
+    user: User = Depends(get_current_user),
+    _owner: User = Depends(require_owner),
+):
+    if body.autonomy not in (None, "auto_fix", "ask_first"):
+        raise HTTPException(status_code=422, detail="autonomy must be auto_fix, ask_first, or null")
+    host = db.query(Host).filter(Host.id == host_id, Host.user_id == user.id).first()
+    if not host:
+        raise HTTPException(status_code=404, detail="Host not found")
+    host.autonomy = body.autonomy
+    db.add(host)
+    db.commit()
+    db.refresh(host)
+    return _host_out(host)
 
 
 @router.delete("/{host_id}", status_code=204)

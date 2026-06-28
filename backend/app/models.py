@@ -39,6 +39,8 @@ class Host(Base):
     token = Column(String, nullable=True, unique=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     last_seen_at = Column(DateTime, nullable=True)
+    # Per-server autonomy override. Null means use the fleet-wide setting.
+    autonomy = Column(String, nullable=True)  # auto_fix | ask_first | null
 
     user = relationship("User", back_populates="hosts")
     services = relationship("Service", back_populates="host")

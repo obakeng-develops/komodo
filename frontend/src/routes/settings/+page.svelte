@@ -270,6 +270,12 @@
 		if (showHostCommandId === id) showHostCommandId = null;
 	}
 
+	async function setHostAutonomy(id: string, value: string) {
+		const autonomy = value === '' ? null : (value as 'auto_fix' | 'ask_first');
+		const updated = await api.hosts.setAutonomy(id, autonomy);
+		hosts = hosts.map((h) => (h.id === id ? { ...h, autonomy: updated.autonomy } : h));
+	}
+
 	async function addUrlService() {
 		const name = newUrlName.trim();
 		const url = newUrl.trim();
@@ -492,6 +498,16 @@
 									</div>
 								</div>
 								<div class="flex items-center gap-2 flex-shrink-0">
+									<select
+										value={host.autonomy ?? ''}
+										on:change={(e) => setHostAutonomy(host.id, e.currentTarget.value)}
+										title="Autonomy for this server"
+										class="px-2 py-1.5 rounded-lg bg-white border border-surface-300 font-sans text-[12px] text-surface-700 focus:outline-none focus:border-surface-500"
+									>
+										<option value="">Fleet default</option>
+										<option value="auto_fix">Auto-fix</option>
+										<option value="ask_first">Ask first</option>
+									</select>
 									<button
 										type="button"
 										on:click={() => {
