@@ -84,9 +84,12 @@ def docker_restart(name):
 
 def run_docker_logs(name, tail=50):
     try:
+        # Merge stderr into stdout: many images (nginx, postgres, most apps)
+        # log to stderr, so capturing stdout alone returns nothing.
         proc = subprocess.run(
             ["docker", "logs", "--tail", str(tail), name],
-            capture_output=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
             text=True,
             timeout=30,
             check=False,
@@ -95,7 +98,7 @@ def run_docker_logs(name, tail=50):
         logger.error("docker logs %s failed: %s", name, exc)
         return None
     if proc.returncode != 0:
-        logger.warning("docker logs %s: %s", name, proc.stderr.strip())
+        logger.warning("docker logs %s: %s", name, (proc.stdout or "").strip())
         return None
     return proc.stdout
 
@@ -208,7 +211,12 @@ def main():
             if containers:
                 response = send_beat(args.server, args.token, containers)
                 if response:
-                    for name in response.get("restart", []):
+                    for action in response.get("restart", []):
+                        # The backend sends action dicts ({"action": ..., "container": ...});
+                        # tolerate a bare name string too.
+                        name = action.get("container") if isinstance(action, dict) else action
+                        if not name:
+                            continue
                         logger.info("restarting %s", name)
                         if docker_restart(name):
                             logger.info("restarted %s", name)
