@@ -49,6 +49,7 @@ async def lifespan(app: FastAPI):
     # introduced after a table's first deploy here, idempotently.
     with engine.begin() as conn:
         conn.execute(text("ALTER TABLE hosts ADD COLUMN IF NOT EXISTS autonomy VARCHAR"))
+        conn.execute(text("ALTER TABLE hosts ADD COLUMN IF NOT EXISTS agent_version VARCHAR"))
     ensure_seed_data()
     await monitor.start()
     yield

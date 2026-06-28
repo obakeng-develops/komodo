@@ -52,6 +52,8 @@ export interface Host {
   last_seen_at: string | null;
   created_at: string;
   autonomy: 'auto_fix' | 'ask_first' | null;
+  agent_version: string | null;
+  agent_outdated: boolean;
 }
 
 export interface IncidentEvent {

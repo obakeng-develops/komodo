@@ -41,6 +41,7 @@ class Host(Base):
     last_seen_at = Column(DateTime, nullable=True)
     # Per-server autonomy override. Null means use the fleet-wide setting.
     autonomy = Column(String, nullable=True)  # auto_fix | ask_first | null
+    agent_version = Column(String, nullable=True)  # version the agent last reported
 
     user = relationship("User", back_populates="hosts")
     services = relationship("Service", back_populates="host")

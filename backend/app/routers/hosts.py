@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.deps import get_current_user, get_db_session, hash_agent_token, require_owner
 from app.models import Host, User
+from app.routers.agent import current_agent_version
 from app.schemas import HostCreate, HostOut, HostUpdate
 from pydantic import BaseModel
 from datetime import datetime
@@ -28,6 +29,10 @@ def _token_preview(token: str) -> str:
 
 
 def _host_out(host: Host) -> HostOut:
+    current = current_agent_version()
+    # Flag a host whose agent has reported but isn't on the served version. A
+    # never-seen host (no agent yet) and an unknown server version are not flagged.
+    outdated = bool(host.last_seen_at and current and host.agent_version != current)
     return HostOut(
         id=host.id,
         name=host.name,
@@ -35,6 +40,8 @@ def _host_out(host: Host) -> HostOut:
         last_seen_at=host.last_seen_at,
         created_at=host.created_at,
         autonomy=host.autonomy,
+        agent_version=host.agent_version,
+        agent_outdated=outdated,
     )
 
 

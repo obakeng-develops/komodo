@@ -21,6 +21,11 @@ logging.basicConfig(
 )
 logger = logging.getLogger("komodo-agent")
 
+# Bumped whenever the agent script changes. Reported on every beat so Komodo can
+# flag hosts running an out-of-date agent. The server compares it against the
+# version of the script it currently serves.
+AGENT_VERSION = "2026-06-28"
+
 
 def run_docker_ps():
     try:
@@ -105,7 +110,7 @@ def run_docker_logs(name, tail=50):
 
 def send_beat(server, token, containers):
     url = f"{server.rstrip('/')}/api/v1/agent/beat"
-    data = json.dumps({"containers": containers}).encode()
+    data = json.dumps({"containers": containers, "agent_version": AGENT_VERSION}).encode()
     req = urllib.request.Request(
         url,
         data=data,
