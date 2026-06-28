@@ -5,6 +5,7 @@
 	import { isOwner } from '$lib/auth';
 	import ServiceRow from '$lib/components/ServiceRow.svelte';
 	import AutonomyToggle from '$lib/components/AutonomyToggle.svelte';
+	import { groupByServer, serverRollup } from '$lib/grouping';
 	import type { Host, Service, TeamMember, User, UserSettings } from '$lib/types';
 
 	let user: User | null = null;
@@ -47,6 +48,7 @@
 	let savingLlm = false;
 	let llmSavedMessage: string | null = null;
 
+	$: serverGroups = groupByServer(services);
 	$: autonomy = settings?.autonomy ?? 'auto_fix';
 	$: profileDirty = user && (editName.trim() !== user.name || editPhone.trim() !== (user.phone ?? ''));
 	$: llmSettingsDirty = settings && (
@@ -447,13 +449,21 @@
 				<div class="mt-1 font-sans text-xs leading-snug text-surface-500">
 					Add a server below and run the agent to see its Docker containers.
 				</div>
-				<div class="mt-3.5 flex flex-col gap-2.5">
-					{#each services as service (service.id)}
-						<ServiceRow
-							{service}
-							on:toggle={(e) => setWatchOnly(service.id, e.detail.watch_only)}
-							on:remove={() => removeService(service.id)}
-						/>
+				<div class="mt-3.5 flex flex-col gap-4">
+					{#each serverGroups as group (group.name)}
+						<div class="flex flex-col gap-2.5">
+							<div class="flex items-center justify-between gap-3">
+								<div class="font-mono text-[11px] uppercase tracking-wide text-surface-500 truncate">{group.name}</div>
+								<div class="font-mono text-[11px] {group.down ? 'text-danger-600' : group.degraded ? 'text-surface-700' : 'text-surface-400'}">{serverRollup(group)}</div>
+							</div>
+							{#each group.services as service (service.id)}
+								<ServiceRow
+									{service}
+									on:toggle={(e) => setWatchOnly(service.id, e.detail.watch_only)}
+									on:remove={() => removeService(service.id)}
+								/>
+							{/each}
+						</div>
 					{/each}
 					{#if services.length === 0}
 						<div class="font-sans text-xs text-surface-500">No services yet — add a server below and run the agent.</div>
