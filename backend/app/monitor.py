@@ -259,6 +259,14 @@ class ServiceMonitor:
                 key = (host.id, name)
                 svc = existing.get(key)
                 if svc is None:
+                    if c["status"] == "down":
+                        # First time we've seen this container and it isn't
+                        # running. It's a pre-existing stopped container — an old
+                        # deploy left behind on a Kamal host, say — not a failure
+                        # we watched happen. Ignore it until it actually comes up,
+                        # so deployment history doesn't show up as a fleet of
+                        # dead services. See issue #17.
+                        continue
                     svc = Service(
                         user_id=user.id,
                         host_id=host.id,
