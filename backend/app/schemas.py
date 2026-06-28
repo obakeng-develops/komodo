@@ -232,6 +232,7 @@ class ActiveIncidentState(BaseModel):
     service_id: str | None = None
     service_name: str | None = None
     host_id: str | None = None
+    method: str | None = None  # agent | docker | url — url can't be restarted
     view: str  # resting | detecting | diagnosing | asking | fixing | verifying | resolved | takeover
     elapsed: int = 0
     autonomy: str

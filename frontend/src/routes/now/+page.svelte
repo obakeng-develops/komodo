@@ -216,7 +216,11 @@
 						<div class="p-5 sm:p-9" in:contentFly|local>
 							<div class="flex justify-between items-start gap-4">
 								<div class="font-serif text-title leading-snug text-surface-900 tracking-tight">
-									{$activeIncident.service_name} is down. A restart usually fixes it — want me to?
+									{#if $activeIncident.method === 'url'}
+										{$activeIncident.service_name} is unreachable. I can't restart a URL check — here's what I found.
+									{:else}
+										{$activeIncident.service_name} is down. A restart usually fixes it — want me to?
+									{/if}
 								</div>
 								<span class={badgeClasses()}>{badgeLabel()}</span>
 							</div>
@@ -268,12 +272,14 @@
 									>{#if trimmedLogLines.length}{trimmedLogLines.join('\n')}{:else}<span class="text-surface-500">Waiting for log lines from the agent…</span>{/if}</pre>
 							</div>
 							<div class="mt-5 pt-5 border-t border-surface-200 flex flex-col sm:flex-row sm:items-center gap-3">
-								<button
-									class="inline-flex items-center justify-center px-5 py-2.5 rounded-lg bg-surface-900 text-white font-sans font-medium text-sm border-none cursor-pointer hover:bg-surface-800"
-									on:click={approve}
-								>
-									Approve restart
-								</button>
+								{#if $activeIncident.can_approve}
+									<button
+										class="inline-flex items-center justify-center px-5 py-2.5 rounded-lg bg-surface-900 text-white font-sans font-medium text-sm border-none cursor-pointer hover:bg-surface-800"
+										on:click={approve}
+									>
+										Approve restart
+									</button>
+								{/if}
 								<button
 									class="inline-flex items-center justify-center px-4 py-2.5 rounded-lg bg-white text-surface-700 font-sans font-medium text-sm border border-surface-300 cursor-pointer hover:bg-surface-50"
 									on:click={takeOver}
@@ -414,12 +420,21 @@
 						<div class="p-5 sm:p-9" in:contentFly|local>
 							<div class={badgeClasses()}>{badgeLabel()}</div>
 							<div class="mt-4 font-serif text-title leading-snug text-surface-900 tracking-tight">Okay — it's yours.</div>
-							<div class="mt-3.5 font-serif text-base leading-relaxed text-surface-600">
-								I've stepped back and won't touch anything. Here's the fix I was about to run, if it helps:
-							</div>
-							<div class="mt-4 bg-surface-950 rounded-xl px-[18px] py-4 font-mono text-[13px] leading-relaxed text-surface-300">
-								<span class="text-surface-500">$</span> {$activeIncident.proposed_fix || `docker restart ${$activeIncident.service_name}`}
-							</div>
+							{#if $activeIncident.method === 'url'}
+								<div class="mt-3.5 font-serif text-base leading-relaxed text-surface-600">
+									I've stepped back. I can't restart a URL check — here's what I found:
+								</div>
+								<div class="mt-4 bg-surface-50 border border-surface-200 rounded-xl px-[18px] py-4 font-sans text-label leading-relaxed text-surface-700">
+									{$activeIncident.proposed_fix || $activeIncident.llm_diagnosis || 'The endpoint failed its health check — check that it is up and reachable.'}
+								</div>
+							{:else}
+								<div class="mt-3.5 font-serif text-base leading-relaxed text-surface-600">
+									I've stepped back and won't touch anything. Here's the fix I was about to run, if it helps:
+								</div>
+								<div class="mt-4 bg-surface-950 rounded-xl px-[18px] py-4 font-mono text-label leading-relaxed text-surface-300">
+									<span class="text-surface-500">$</span> {$activeIncident.proposed_fix || `docker restart ${$activeIncident.service_name}`}
+								</div>
+							{/if}
 							<div class="mt-3.5 flex gap-4">
 								<button class="bg-transparent border-none cursor-pointer font-medium text-xs font-mono text-surface-600 underline underline-offset-[3px] decoration-surface-400 hover:text-surface-900">view logs ↗</button>
 								<button class="bg-transparent border-none cursor-pointer font-medium text-xs font-mono text-surface-600 underline underline-offset-[3px] decoration-surface-400 hover:text-surface-900">open /healthz ↗</button>

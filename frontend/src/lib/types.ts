@@ -151,6 +151,8 @@ export interface ActiveIncidentState {
   incident_id: string | null;
   service_id: string | null;
   service_name: string | null;
+  host_id?: string | null;
+  method?: 'agent' | 'docker' | 'url' | null;
   view: 'resting' | 'detecting' | 'diagnosing' | 'asking' | 'fixing' | 'verifying' | 'resolved' | 'takeover';
   elapsed: number;
   autonomy: 'auto_fix' | 'ask_first';

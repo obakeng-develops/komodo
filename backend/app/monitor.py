@@ -421,7 +421,15 @@ class ServiceMonitor:
             "image": service.agent_host_info.get("image") if service.agent_host_info else None,
             "container_state": service.agent_host_info.get("state") if service.agent_host_info else None,
             "container_health": service.agent_host_info.get("health") if service.agent_host_info else None,
-            "location": f"{service.agent_host_info.get('host_name')}:{service.name}" if service.agent_host_info else service.name,
+            "location": (
+                service.health_check_url
+                if service.method == "url" and service.health_check_url
+                else (
+                    f"{service.agent_host_info.get('host_name')}:{service.name}"
+                    if service.agent_host_info
+                    else service.name
+                )
+            ),
             "logs": logs,
         }
         result = await llm_client.diagnose(
@@ -533,7 +541,16 @@ class ServiceMonitor:
 
         stream_manager.broadcast("incident_created", {"incident_id": self._incident_id})
 
-        if self._autonomy == "ask_first":
+        if self._method == "url":
+            # Komodo can't restart a URL endpoint. There are no logs to fetch, so
+            # diagnose from the endpoint + status and hand it to a human — never
+            # offer a restart we can't perform. See issues #33, #35.
+            self._proposed_fix = None
+            self._proposed_fix_action = None
+            self._view = "detecting"
+            self._logs_arrived.set()
+            self._awaiting_logs_task = asyncio.create_task(self._diagnose_url_then_ask())
+        elif self._autonomy == "ask_first":
             self._view = "detecting"
             self._awaiting_logs_task = asyncio.create_task(self._wait_then_ask())
         elif info["rate_limited"]:
@@ -544,11 +561,44 @@ class ServiceMonitor:
             # This keeps the dashboard useful and gives the LLM context.
             self._view = "detecting"
             self._awaiting_logs_task = asyncio.create_task(self._wait_then_restart())
-        elif self._method == "url":
-            await self._finish("escalated", "URL service is down — I can't restart it, handing to you")
         else:
             await self._do_restart()
         self._broadcast_state()
+
+    async def _diagnose_url_then_ask(self, llm_timeout: float = 20.0):
+        try:
+            await asyncio.wait_for(self._diagnose_url(self._incident_id, self._service_id), timeout=llm_timeout)
+        except (asyncio.TimeoutError, Exception):
+            pass
+        async with self._lock:
+            if self._view in ("detecting", "diagnosing") and self._incident_id:
+                self._view = "asking"
+                self._broadcast_state()
+
+    async def _diagnose_url(self, incident_id: str | None, service_id: str | None):
+        if not incident_id or not service_id:
+            return
+
+        def load():
+            db = SessionLocal()
+            try:
+                user = _owner(db)
+                svc = db.query(Service).filter(Service.id == service_id).first()
+                settings = (
+                    db.query(UserSettings).filter(UserSettings.user_id == user.id).first()
+                    if user
+                    else None
+                )
+                if svc is not None:
+                    # touch fields so they load before the session closes
+                    _ = (svc.name, svc.method, svc.status, svc.health_check_url, svc.agent_host_info)
+                return svc, settings
+            finally:
+                db.close()
+
+        svc, settings = await asyncio.to_thread(load)
+        if svc and settings:
+            await self._request_llm_diagnosis(incident_id=incident_id, service=svc, logs=None, settings=settings)
 
     async def _wait_then_ask(self, log_timeout: float = 12.0, llm_timeout: float = 15.0):
         try:
@@ -932,10 +982,12 @@ class ServiceMonitor:
             service_id=self._service_id,
             service_name=self._service_name,
             host_id=self._host_id,
+            method=self._method,
             view=self._view,
             elapsed=self._elapsed,
             autonomy=self._autonomy,
-            can_approve=self._view == "asking",
+            # A URL endpoint can't be restarted, so never offer approve-restart for it.
+            can_approve=self._view == "asking" and self._method != "url",
             can_take_over=self._view in ("asking",) + ACTIVE_VIEWS,
             can_hand_back=self._view == "takeover",
             timeline=self._build_timeline(),
