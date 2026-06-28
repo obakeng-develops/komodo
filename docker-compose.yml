@@ -12,8 +12,7 @@ services:
       - caddy_data:/data
       - caddy_config:/config
     depends_on:
-      - frontend
-      - backend
+      - web
 
   postgres:
     image: postgres:16-alpine
@@ -50,8 +49,11 @@ services:
       PUBLIC_KEY_FILE: /keys/executor.pub
       ALLOW_SIMULATE: "false"
 
-  backend:
-    build: ./backend
+  # One image serves the SPA and the API on a single origin (see Dockerfile).
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
     restart: unless-stopped
     volumes:
       - ./secrets/executor.key:/keys/executor.key:ro
@@ -75,12 +77,6 @@ services:
         condition: service_started
       executor:
         condition: service_started
-
-  frontend:
-    build: ./frontend
-    restart: unless-stopped
-    depends_on:
-      - backend
 
 volumes:
   postgres_data:
