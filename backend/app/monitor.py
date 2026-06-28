@@ -799,12 +799,16 @@ class ServiceMonitor:
             db.refresh(incident)
 
             rate_on = self._guardrail_on(db, user.id, "rate_limit")
-            logger.info("action=incident_opened incident=%s service=%s user=%s severity=%s", incident.id, service.name, user.id, severity)
+            # A server can override the fleet-wide autonomy (e.g. ask-first on a
+            # production box, auto-fix elsewhere). Null means use the global one.
+            host = db.query(Host).filter(Host.id == service.host_id).first() if service.host_id else None
+            autonomy = (host.autonomy if host and host.autonomy else settings.autonomy)
+            logger.info("action=incident_opened incident=%s service=%s user=%s severity=%s autonomy=%s", incident.id, service.name, user.id, severity, autonomy)
             return {
                 "incident_id": incident.id,
                 "service_id": service.id,
                 "user_id": user.id,
-                "autonomy": settings.autonomy,
+                "autonomy": autonomy,
                 "rate_limited": rate_on and self._recent_restarts(snapshot.name) >= 3,
                 "escalate_on": self._guardrail_on(db, user.id, "escalate_90"),
             }

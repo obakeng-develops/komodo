@@ -5,6 +5,8 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 
+from sqlalchemy import text
+
 from app.config import get_settings
 from app.database import Base, engine
 from app.idempotency import idempotency_middleware
@@ -43,6 +45,10 @@ async def lifespan(app: FastAPI):
             "Set a strong, random AUTH_SECRET before starting Komodo."
         )
     Base.metadata.create_all(bind=engine)
+    # create_all adds new tables but never alters existing ones. Add columns
+    # introduced after a table's first deploy here, idempotently.
+    with engine.begin() as conn:
+        conn.execute(text("ALTER TABLE hosts ADD COLUMN IF NOT EXISTS autonomy VARCHAR"))
     ensure_seed_data()
     await monitor.start()
     yield
