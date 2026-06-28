@@ -393,17 +393,27 @@
 						class="px-3 py-2 rounded-lg bg-white border border-surface-300 font-sans text-sm text-surface-900 focus:outline-none focus:border-surface-500"
 					>
 						<option value="deepseek">DeepSeek</option>
+						<option value="openrouter">OpenRouter</option>
 					</select>
 				</label>
 				<label class="flex flex-col gap-1">
 					<span class="font-sans text-[11px] text-surface-500">Model</span>
-					<select
-						bind:value={editLlmModel}
-						class="px-3 py-2 rounded-lg bg-white border border-surface-300 font-sans text-sm text-surface-900 focus:outline-none focus:border-surface-500"
-					>
-						<option value="deepseek-v4-pro">deepseek-v4-pro</option>
-						<option value="deepseek-v4-flash">deepseek-v4-flash</option>
-					</select>
+					{#if editLlmProvider === 'openrouter'}
+						<input
+							type="text"
+							bind:value={editLlmModel}
+							placeholder="e.g. anthropic/claude-3.5-sonnet"
+							class="px-3 py-2 rounded-lg bg-white border border-surface-300 font-mono text-sm text-surface-900 focus:outline-none focus:border-surface-500"
+						/>
+					{:else}
+						<select
+							bind:value={editLlmModel}
+							class="px-3 py-2 rounded-lg bg-white border border-surface-300 font-sans text-sm text-surface-900 focus:outline-none focus:border-surface-500"
+						>
+							<option value="deepseek-v4-pro">deepseek-v4-pro</option>
+							<option value="deepseek-v4-flash">deepseek-v4-flash</option>
+						</select>
+					{/if}
 				</label>
 				<label class="flex flex-col gap-1">
 					<span class="font-sans text-[11px] text-surface-500">{llmApiKeyLabel}</span>
