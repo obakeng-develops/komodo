@@ -1,0 +1,18 @@
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.db
+*.bak
+.env
+
+# deploy secrets (executor RSA keypair, etc.) — never commit
+secrets/
+
+frontend/node_modules/
+frontend/.svelte-kit/
+frontend/build/
+frontend/dist/
+
+.DS_Store
+*.log

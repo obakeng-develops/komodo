@@ -1,0 +1,113 @@
+import secrets
+
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import ConfigDict
+from sqlalchemy.orm import Session
+
+from app.deps import get_current_user, get_db_session, hash_agent_token, require_owner
+from app.models import Host, Service, User
+from app.schemas import HostCreate, HostOut
+from pydantic import BaseModel
+from datetime import datetime
+
+class HostOutWithToken(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: str
+    name: str
+    token: str
+    token_preview: str
+    last_seen_at: datetime | None = None
+    created_at: datetime
+
+
+router = APIRouter(prefix="/hosts", tags=["hosts"])
+
+
+def _token_preview(token: str) -> str:
+    return f"{token[:6]}...{token[-6:]}"
+
+
+def _host_out(host: Host) -> HostOut:
+    return HostOut(
+        id=host.id,
+        name=host.name,
+        token_preview=_token_preview(host.token_hash or host.token or ""),
+        last_seen_at=host.last_seen_at,
+        created_at=host.created_at,
+    )
+
+
+@router.get("", response_model=list[HostOut])
+def list_hosts(user: User = Depends(get_current_user)):
+    return [_host_out(h) for h in user.hosts]
+
+
+@router.post("", response_model=HostOutWithToken, status_code=201)
+def create_host(
+    body: HostCreate,
+    db: Session = Depends(get_db_session),
+    user: User = Depends(get_current_user),
+    _owner: User = Depends(require_owner),
+):
+    existing = db.query(Host).filter(Host.user_id == user.id, Host.name == body.name).first()
+    if existing:
+        raise HTTPException(
+            status_code=409,
+            detail=f"A server named '{body.name}' already exists.",
+        )
+    token = secrets.token_urlsafe(32)
+    host = Host(
+        user_id=user.id,
+        name=body.name,
+        token=token,
+        token_hash=hash_agent_token(token),
+    )
+    db.add(host)
+    db.commit()
+    db.refresh(host)
+    return HostOutWithToken(
+        id=host.id,
+        name=host.name,
+        token=host.token,
+        token_preview=_token_preview(host.token),
+        last_seen_at=host.last_seen_at,
+        created_at=host.created_at,
+    )
+
+
+@router.delete("/{host_id}", status_code=204)
+def delete_host(
+    host_id: str,
+    db: Session = Depends(get_db_session),
+    user: User = Depends(get_current_user),
+    _owner: User = Depends(require_owner),
+):
+    host = db.query(Host).filter(Host.id == host_id, Host.user_id == user.id).first()
+    if not host:
+        raise HTTPException(status_code=404, detail="Host not found")
+    db.query(Service).filter(Service.host_id == host.id).delete(synchronize_session=False)
+    db.delete(host)
+    db.commit()
+    return None
+
+
+@router.post("/{host_id}/rotate-token", response_model=HostOut)
+def rotate_host_token(
+    host_id: str,
+    db: Session = Depends(get_db_session),
+    user: User = Depends(get_current_user),
+    _owner: User = Depends(require_owner),
+):
+    host = db.query(Host).filter(Host.id == host_id, Host.user_id == user.id).first()
+    if not host:
+        raise HTTPException(status_code=404, detail="Host not found")
+    token = secrets.token_urlsafe(32)
+    host.token = token
+    host.token_hash = hash_agent_token(token)
+    db.commit()
+    db.refresh(host)
+    # ponytail: return full token on rotation so the user can update the agent.
+    out = _host_out(host)
+    out.token = token
+    return out
+
