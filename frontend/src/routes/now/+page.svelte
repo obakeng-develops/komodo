@@ -147,6 +147,11 @@
 	}
 
 	$: statusText = $activeIncident?.status_text || summaryText();
+
+	const actionVerb = (a?: string | null) =>
+		a === 'stop_container' ? 'stop' : a === 'start_container' ? 'start' : 'restart';
+	const actionGerund = (a?: string | null) =>
+		a === 'stop_container' ? 'stopping' : a === 'start_container' ? 'starting' : 'restarting';
 </script>
 
 <div class="px-4 sm:px-10 py-7 sm:py-9 pb-20">
@@ -219,7 +224,7 @@
 									{#if $activeIncident.method === 'url'}
 										{$activeIncident.service_name} is unreachable. I can't restart a URL check — here's what I found.
 									{:else}
-										{$activeIncident.service_name} is down. A restart usually fixes it — want me to?
+										{$activeIncident.service_name} is down. I can {actionVerb($activeIncident.proposed_action)} it — want me to?
 									{/if}
 								</div>
 								<span class={badgeClasses()}>{badgeLabel()}</span>
@@ -277,7 +282,7 @@
 										class="inline-flex items-center justify-center px-5 py-2.5 rounded-lg bg-surface-900 text-white font-sans font-medium text-sm border-none cursor-pointer hover:bg-surface-800"
 										on:click={approve}
 									>
-										Approve restart
+										Approve {actionVerb($activeIncident.proposed_action)}
 									</button>
 								{/if}
 								<button
@@ -292,7 +297,7 @@
 						<div class="p-5 sm:p-9" in:contentFly|local>
 							<div class="flex justify-between items-start gap-4">
 								<div class="font-serif text-title leading-snug text-surface-900 tracking-tight">
-									{$activeIncident.service_name} is wedged. I'm restarting it.
+									{$activeIncident.service_name} is stuck. I'm {actionGerund($activeIncident.proposed_action)} it.
 								</div>
 								<span class={badgeClasses()}>{badgeLabel()}</span>
 							</div>
@@ -432,7 +437,7 @@
 									I've stepped back and won't touch anything. Here's the fix I was about to run, if it helps:
 								</div>
 								<div class="mt-4 bg-surface-950 rounded-xl px-[18px] py-4 font-mono text-label leading-relaxed text-surface-300">
-									<span class="text-surface-500">$</span> {$activeIncident.proposed_fix || `docker restart ${$activeIncident.service_name}`}
+									<span class="text-surface-500">$</span> {$activeIncident.proposed_fix || `docker ${actionVerb($activeIncident.proposed_action)} ${$activeIncident.service_name}`}
 								</div>
 							{/if}
 							<div class="mt-3.5 flex gap-4">
