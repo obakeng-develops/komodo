@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+# Run Komodo's quality gates. Exits non-zero the moment one fails.
+# Used by scripts/signoff and the pre-push hook.
+set -e
+SECONDS=0
+cd "$(dirname "$0")/.."
+
+GREEN=32; BLUE=34
+announce() { echo -e "\033[0;$2m$1\033[0m"; }
+run() {
+  local SPLIT=$SECONDS
+  announce "\nRun $1" $BLUE
+  eval "$1"
+  local INTERVAL=$((SECONDS - SPLIT))
+  announce "Completed $1 in $INTERVAL seconds" $GREEN
+}
+
+run "python3 -m compileall -q backend/app executor/app llm-service/app agent"
+run "npm --prefix frontend run check"
+run "npm --prefix frontend run build"
+run "docker compose config -q"
