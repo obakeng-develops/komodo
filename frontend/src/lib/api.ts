@@ -143,6 +143,12 @@ export const api = {
       request<void>(`/hosts/${id}`, {
         method: 'DELETE',
       }),
+    setAutonomy: (id: string, autonomy: 'auto_fix' | 'ask_first' | null) =>
+      request<Host>(`/hosts/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ autonomy }),
+        headers: { 'Idempotency-Key': idempotencyKey() },
+      }),
     rotateToken: (id: string) =>
       request<Host>(`/hosts/${id}/rotate-token`, {
         method: 'POST',
