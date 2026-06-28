@@ -10,6 +10,9 @@ logger = logging.getLogger("llm.diagnose")
 
 BASE_URLS = {
     "deepseek": "https://api.deepseek.com",
+    # OpenRouter speaks the OpenAI chat-completions API; diagnose() appends
+    # /v1/chat/completions, giving https://openrouter.ai/api/v1/chat/completions.
+    "openrouter": "https://openrouter.ai/api",
 }
 
 
