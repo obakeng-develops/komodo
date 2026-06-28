@@ -8,6 +8,7 @@
 	import { cardReceive, cardSend, contentFly } from '$lib/animation';
 	import AutonomyToggle from '$lib/components/AutonomyToggle.svelte';
 	import Timeline from '$lib/components/Timeline.svelte';
+	import { groupByServer, serverRollup } from '$lib/grouping';
 	import type { Service, UserSettings } from '$lib/types';
 
 	let settings: UserSettings | null = null;
@@ -43,6 +44,7 @@
 	}
 
 	$: trimmedLogLines = $logLines.slice(-MAX_LOG_LINES);
+	$: serverGroups = groupByServer(services);
 
 	async function updateAutonomy(mode: 'auto_fix' | 'ask_first') {
 		if (!settings) return;
@@ -177,8 +179,27 @@
 							</div>
 							<div class="mt-7 font-serif text-[40px] leading-tight text-surface-900 tracking-tight">Everything's fine.</div>
 							<div class="mt-4 font-sans text-base leading-relaxed text-surface-600">
-								{summaryText()} · watching <strong class="font-semibold text-surface-900">{services.length} service{services.length === 1 ? '' : 's'}</strong>.
+								{summaryText()} · watching <strong class="font-semibold text-surface-900">{services.length} service{services.length === 1 ? '' : 's'}</strong>
+								{#if serverGroups.length > 1}across <strong class="font-semibold text-surface-900">{serverGroups.length} servers</strong>{/if}.
 							</div>
+							{#if serverGroups.length > 1}
+								<div class="mt-5 flex flex-col divide-y divide-surface-100 border-t border-b border-surface-100">
+									{#each serverGroups as group (group.name)}
+										<button
+											type="button"
+											class="flex items-center justify-between gap-3 py-2.5 bg-transparent border-none cursor-pointer text-left hover:opacity-70"
+											on:click={() => goto('/settings')}
+										>
+											<span class="flex items-center gap-2.5 min-w-0">
+												<span class="w-1.5 h-1.5 rounded-full flex-shrink-0 {group.down ? 'bg-danger-500' : group.degraded ? 'bg-surface-400' : 'bg-surface-300'}"></span>
+												<span class="font-mono text-[13px] text-surface-800 truncate">{group.name}</span>
+												<span class="font-sans text-[11px] text-surface-400">{group.services.length} service{group.services.length === 1 ? '' : 's'}</span>
+											</span>
+											<span class="font-mono text-[11px] flex-shrink-0 {group.down ? 'text-danger-600' : group.degraded ? 'text-surface-600' : 'text-surface-400'}">{serverRollup(group)}</span>
+										</button>
+									{/each}
+								</div>
+							{/if}
 							<div class="mt-6 pt-5 border-t border-surface-200 flex justify-between items-center">
 								<button
 									class="bg-transparent border-none cursor-pointer font-mono text-xs text-surface-500 underline underline-offset-[3px] decoration-surface-400 hover:text-surface-900"
