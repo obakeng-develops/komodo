@@ -13,8 +13,9 @@
   input {
     @apply font-mono;
   }
+  /* One focus treatment: drop the browser outline and let each input's own
+     focus:border-surface-500 show. (Was an off-brand indigo !important ring.) */
   input:focus {
     @apply outline-none;
-    border-color: theme('colors.accent.500') !important;
   }
 }
