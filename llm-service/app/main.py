@@ -1,3 +1,4 @@
+import hmac
 from contextlib import asynccontextmanager
 
 from fastapi import Depends, FastAPI, Header, HTTPException
@@ -24,7 +25,7 @@ def _verify_internal_key(x_internal_api_key: str | None = Header(None)):
     expected = get_settings().internal_api_key
     if not expected:
         raise HTTPException(status_code=500, detail="INTERNAL_API_KEY not configured")
-    if x_internal_api_key != expected:
+    if not (x_internal_api_key and hmac.compare_digest(x_internal_api_key, expected)):
         raise HTTPException(status_code=401, detail="Invalid internal API key")
 
 

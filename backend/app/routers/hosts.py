@@ -56,10 +56,10 @@ def create_host(
             detail=f"A server named '{body.name}' already exists.",
         )
     token = secrets.token_urlsafe(32)
+    # Persist only the bcrypt hash; the raw token is returned once, never stored.
     host = Host(
         user_id=user.id,
         name=body.name,
-        token=token,
         token_hash=hash_agent_token(token),
     )
     db.add(host)
@@ -68,8 +68,8 @@ def create_host(
     return HostOutWithToken(
         id=host.id,
         name=host.name,
-        token=host.token,
-        token_preview=_token_preview(host.token),
+        token=token,
+        token_preview=_token_preview(token),
         last_seen_at=host.last_seen_at,
         created_at=host.created_at,
     )
@@ -102,7 +102,7 @@ def rotate_host_token(
     if not host:
         raise HTTPException(status_code=404, detail="Host not found")
     token = secrets.token_urlsafe(32)
-    host.token = token
+    host.token = None  # clear any legacy plaintext; we keep only the hash
     host.token_hash = hash_agent_token(token)
     db.commit()
     db.refresh(host)
