@@ -28,8 +28,18 @@ from app.monitor import monitor
 from app.seed import ensure_seed_data
 
 
+DEFAULT_AUTH_SECRET = "dev-insecure-change-me"
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Fail closed: the session JWT is signed with AUTH_SECRET. If it is still the
+    # built-in default, anyone could forge an owner session. Refuse to serve.
+    if get_settings().auth_secret == DEFAULT_AUTH_SECRET:
+        raise RuntimeError(
+            "AUTH_SECRET is unset (still the built-in default). "
+            "Set a strong, random AUTH_SECRET before starting Komodo."
+        )
     Base.metadata.create_all(bind=engine)
     ensure_seed_data()
     await monitor.start()
