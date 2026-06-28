@@ -1,14 +1,9 @@
-# Single-origin reverse proxy for Komodo.
-# APP_ORIGIN=http://localhost   -> serves plain HTTP (the http:// scheme disables auto-TLS)
+# Single-origin reverse proxy for Komodo. The `web` service serves the SPA and
+# /api together, so Caddy only terminates TLS and forwards everything to it.
+# APP_ORIGIN=http://localhost   -> plain HTTP (the http:// scheme disables auto-TLS)
 # APP_ORIGIN=komodo.example.com -> bare host: Caddy auto-provisions HTTPS via Let's Encrypt
 {$APP_ORIGIN:http://localhost} {
-	# API + health + SSE go to the backend; flush_interval -1 keeps the
-	# /api/v1/stream Server-Sent Events unbuffered.
-	@api path /api/* /health
-	reverse_proxy @api backend:8000 {
+	reverse_proxy web:8000 {
 		flush_interval -1
 	}
-
-	# Everything else is the SvelteKit (adapter-node) frontend.
-	reverse_proxy frontend:5173
 }
