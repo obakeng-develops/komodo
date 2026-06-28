@@ -1,7 +1,7 @@
 # Komodo
 
 Komodo keeps your Docker containers running. It watches them. When one goes down it works out
-why, restarts it within the limits you set, and shows you the whole thing as it happens — or it
+why, restarts it within the limits you set, and shows you the whole thing as it happens. Or it
 stops and asks first. That part is your call.
 
 You log in. Your teammates log in. Everyone sees the same fleet. Owners change things; operators
@@ -22,25 +22,25 @@ watch and act on incidents but can't touch the settings.
 ```
 
 A container fails. The agent reports it. The backend opens an incident, pulls the logs, and sends
-them to the LLM. The diagnosis appears in the UI. Then the agent restarts the container — or, if
+them to the LLM. The diagnosis appears in the UI. Then the agent restarts the container. If
 you asked to approve first, Komodo waits for you. Once the container is healthy again, the
 incident resolves.
 
 The pieces:
 
-- **Agent** — a small, dependency-free Python script on each host you monitor. It reports container
+- **Agent**: a small, dependency-free Python script on each host you monitor. It reports container
   status every few seconds and restarts a container only when the backend tells it to. Nothing else.
-- **Backend** — the control plane. It runs the incident state machine, enforces your guardrails,
+- **Backend**: the control plane. It runs the incident state machine, enforces your guardrails,
   handles auth, and streams live state to the browser.
-- **llm-service** — an isolated service that makes the LLM call. Hand it an incident's logs and it
+- **llm-service**: an isolated service that makes the LLM call. Hand it an incident's logs and it
   returns a cause, a fix, and a confidence level.
-- **executor** — runs a short list of Docker actions on the control-plane host, and only when it
+- **executor**: a short list of Docker actions on the control-plane host, run only when it
   receives a short-lived signed token. The agent handles remote hosts; the executor is the
   local-host path.
-- **frontend** — the dashboard: a live "Now" view, incident history, guardrails, and settings.
-- **postgres** — where state lives.
+- **frontend**: the dashboard. A live "Now" view, incident history, guardrails, and settings.
+- **postgres**: where state lives.
 
-Two roles. **Owners** run everything. **Operators** — your backup on-call — see the whole fleet and
+Two roles. **Owners** run everything. **Operators**, your backup on-call, see the whole fleet and
 can approve, take over, resolve, or hand back an incident, but they can't change settings, the LLM
 key, hosts, services, guardrails, or the team.
 
@@ -82,7 +82,7 @@ Open http://localhost:5173. The first screen asks you to create the owner accoun
 ## Deploy with Docker Compose
 
 This is the supported way to run Komodo in production. Caddy takes the only public port. It serves
-the frontend and forwards `/api` to the backend, so everything sits on one origin — which is what
+the frontend and forwards `/api` to the backend, so everything sits on one origin. That is what
 makes the session cookie and the live stream just work.
 
 **1. Make the secrets**
@@ -107,9 +107,9 @@ Open your `APP_ORIGIN`. Create the owner account on the first-run screen. After 
 closes the setup endpoint for good.
 
 > Add the LLM API key (DeepSeek, say) in **Settings → LLM diagnosis** after you log in. It isn't an
-> environment variable — Komodo stores it encrypted with `ENCRYPTION_KEY`.
+> environment variable. Komodo stores it encrypted with `ENCRYPTION_KEY`.
 
-### Example A — one box, plain HTTP
+### Example A: one box, plain HTTP
 
 `.env`:
 ```dotenv
@@ -127,7 +127,7 @@ LLM_MODEL=deepseek-v4-flash
 docker compose up -d --build      # → http://localhost
 ```
 
-### Example B — a public domain, HTTPS
+### Example B: a public domain, HTTPS
 
 Point an A record at the host, open ports 80 and 443, then:
 
@@ -154,7 +154,7 @@ Kamal expects one web image plus a few prebuilt accessories. Komodo is several s
 clean fit is to fold them: the **backend serves the built frontend** as Kamal's one web app,
 `kamal-proxy` handles TLS, and Postgres, the llm-service, and the executor run as accessories.
 
-> **You have to build that combined image first — this repo doesn't ship one.** The Compose path
+> **You have to build that combined image first. This repo doesn't ship one.** The Compose path
 > runs the frontend as its own service behind Caddy. For Kamal, build the frontend as static files
 > and let the backend serve them:
 >
@@ -174,7 +174,7 @@ clean fit is to fold them: the **backend serves the built frontend** as Kamal's 
 > CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
 > ```
 > The one code change: mount `StaticFiles` with an SPA fallback next to the existing `/api/v1`
-> routes. No Caddy, no path-splitting — one origin by design.
+> routes. No Caddy, no path-splitting: one origin by design.
 
 Kamal only builds the web image, so push the llm-service and executor images to GHCR yourself.
 
@@ -310,8 +310,8 @@ You set the LLM API key in the UI, not the environment. Komodo keeps it encrypte
 ## Security
 
 - The executor runs privileged with the Docker socket mounted, so it can control any container on
-  its host. It accepts only short-lived signed tokens for a fixed set of actions — restart, stop,
-  fetch logs, list — but treat that host as sensitive all the same.
+  its host. It accepts only short-lived signed tokens for a fixed set of actions (restart, stop,
+  fetch logs, list), but treat that host as sensitive all the same.
 - Keep `secrets/`, `.env`, and the database files out of git. The `.gitignore` already does this.
 - On a public deploy, set `COOKIE_SECURE=true` and a `SETUP_TOKEN`.
 
