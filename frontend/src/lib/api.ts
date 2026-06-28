@@ -1,6 +1,7 @@
 import { goto } from '$app/navigation';
 import type {
   ActiveIncidentState,
+  Fleet,
   Guardrail,
   Host,
   Incident,
@@ -129,6 +130,10 @@ export const api = {
       request<void>(`/services/${id}`, {
         method: 'DELETE',
       }),
+  },
+
+  fleet: {
+    get: (windowHours = 168) => request<Fleet>(`/fleet?window_hours=${windowHours}`),
   },
 
   hosts: {

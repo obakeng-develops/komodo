@@ -13,6 +13,7 @@ from app.idempotency import idempotency_middleware
 from app.routers import (
     agent,
     auth,
+    fleet,
     guardrails,
     hosts,
     incidents,
@@ -74,6 +75,7 @@ app.include_router(me.router, prefix="/api/v1")
 app.include_router(settings.router, prefix="/api/v1")
 app.include_router(hosts.router, prefix="/api/v1")
 app.include_router(services.router, prefix="/api/v1")
+app.include_router(fleet.router, prefix="/api/v1")
 app.include_router(incidents.router, prefix="/api/v1")
 app.include_router(learnings.router, prefix="/api/v1")
 app.include_router(guardrails.router, prefix="/api/v1")
