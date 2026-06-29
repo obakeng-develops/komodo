@@ -301,13 +301,15 @@ class ServiceMonitor:
                         "machine_id": mid, "app": app,
                         "region": m.get("region"), "state": m.get("state"),
                     }
-                    svc.allowed_fix_action = None  # read-only until remediation lands
+                    # The fix targets the machine (id + app), not the service name.
+                    fix = {"action": "restart_container", "container": mid, "fly_app": app}
+                    svc.allowed_fix_action = fix
                     db.flush()
                     db.refresh(svc)
                     snapshots[name] = _ServiceSnapshot(
                         service_id=svc.id, name=name, status=status, method="fly",
                         host_id=None, watch_only=svc.watch_only, state=m.get("state"),
-                        allowed_fix_action=None,
+                        allowed_fix_action=fix,
                     )
             # A machine that's gone (destroyed, app removed) stops being a service.
             for name, svc in existing.items():
@@ -522,7 +524,7 @@ class ServiceMonitor:
                 if service.method == "url" and service.health_check_url
                 else (
                     f"{service.agent_host_info.get('host_name')}:{service.name}"
-                    if service.agent_host_info
+                    if service.agent_host_info and service.agent_host_info.get("host_name")
                     else service.name
                 )
             ),
@@ -557,8 +559,12 @@ class ServiceMonitor:
                             self._llm_action = result.get("action")
                             # Let the model's pick be the action we'd run (still
                             # whitelist-checked at execution).
-                            if self._llm_action in ("restart_container", "stop_container", "start_container") and self._container:
-                                self._proposed_fix_action = {"action": self._llm_action, "container": self._container}
+                            if self._llm_action in ("restart_container", "stop_container", "start_container"):
+                                if self._method == "fly" and isinstance(self._proposed_fix_action, dict):
+                                    # Keep the machine target (id + app); swap only the verb.
+                                    self._proposed_fix_action = {**self._proposed_fix_action, "action": self._llm_action}
+                                elif self._container:
+                                    self._proposed_fix_action = {"action": self._llm_action, "container": self._container}
                         self._llm_ready.set()
                         self._broadcast_state()
         finally:
@@ -647,11 +653,10 @@ class ServiceMonitor:
 
         stream_manager.broadcast("incident_created", {"incident_id": self._incident_id})
 
-        if self._method in ("url", "fly"):
-            # Komodo can't act on a URL endpoint, and can't yet act on a Fly
-            # Machine. There are no agent logs to fetch, so diagnose from status
-            # and hand it to a human — never offer a fix we can't perform.
-            # See issues #33, #35 (url) and #48 (fly).
+        if self._method == "url":
+            # Komodo can't act on a URL endpoint. There are no logs to fetch, so
+            # diagnose from status and hand it to a human — never offer a fix we
+            # can't perform. See issues #33, #35.
             self._proposed_fix = None
             self._proposed_fix_action = None
             self._view = "detecting"
@@ -659,7 +664,12 @@ class ServiceMonitor:
             self._awaiting_logs_task = asyncio.create_task(self._diagnose_url_then_ask())
         elif self._autonomy == "ask_first":
             self._view = "detecting"
-            self._awaiting_logs_task = asyncio.create_task(self._wait_then_ask())
+            if self._method == "fly":
+                # A Fly machine has no agent logs; diagnose from state, then ask.
+                self._logs_arrived.set()
+                self._awaiting_logs_task = asyncio.create_task(self._diagnose_url_then_ask())
+            else:
+                self._awaiting_logs_task = asyncio.create_task(self._wait_then_ask())
         elif info["rate_limited"]:
             await self._finish("escalated", "Hit the restart limit (3/hour) — handed to you")
             return
@@ -668,6 +678,11 @@ class ServiceMonitor:
             # This keeps the dashboard useful and gives the LLM context.
             self._view = "detecting"
             self._awaiting_logs_task = asyncio.create_task(self._wait_then_restart())
+        elif self._method == "fly":
+            # No logs to wait for; diagnose from machine state, then restart.
+            self._view = "detecting"
+            self._logs_arrived.set()
+            self._awaiting_logs_task = asyncio.create_task(self._diagnose_fly_then_restart())
         else:
             await self._do_restart()
         self._broadcast_state()
@@ -748,6 +763,20 @@ class ServiceMonitor:
                     await self._do_restart()
                 self._broadcast_state()
 
+    async def _diagnose_fly_then_restart(self, llm_timeout: float = 20.0):
+        # A Fly machine has no agent logs; diagnose from its state, then act.
+        try:
+            await asyncio.wait_for(self._diagnose_url(self._incident_id, self._service_id), timeout=llm_timeout)
+        except (asyncio.TimeoutError, Exception):
+            pass
+        async with self._lock:
+            if self._view in ("detecting", "diagnosing") and self._incident_id:
+                if self._llm_action == "none":
+                    await self._finish("escalated", "A restart likely won't fix this — handed to you")
+                else:
+                    await self._do_restart()
+                self._broadcast_state()
+
     async def _do_restart(self):
         """Queue or perform a restart using only whitelisted actions."""
         self._restart_history.setdefault(self._container, []).append(datetime.utcnow())
@@ -760,8 +789,22 @@ class ServiceMonitor:
             self._pending_agent_restarts[self._service_id] = action
             self._view = "fixing"
             self._elapsed = 0
-        elif self._method in ("url", "fly"):
-            await self._finish("escalated", "I can't act on this service automatically — handing to you")
+        elif self._method == "url":
+            await self._finish("escalated", "I can't restart a URL endpoint — handing to you")
+        elif self._method == "fly":
+            action = self._proposed_fix_action or {}
+            machine_id = action.get("container")
+            app = action.get("fly_app")
+            op = fly.OPS.get(action.get("action"))
+            _, token = await asyncio.to_thread(self._fly_config)
+            if not (machine_id and app and op and token and _is_allowed_action(action)):
+                await self._finish("escalated", "Can't run the Fly action safely — handing to you")
+                return
+            if not await fly.machine_action(app, machine_id, op, token):
+                await self._finish("escalated", "Fly action failed — handing to you")
+                return
+            self._view = "fixing"
+            self._elapsed = 0
         else:
             token = executor_client.sign_action("restart_container", self._container)
             ok, err = await executor_client.send_action(self._executor_url(), token)
@@ -1134,7 +1177,7 @@ class ServiceMonitor:
             # won't help. See issues #33, #44.
             can_approve=(
                 self._view == "asking"
-                and self._method not in ("url", "fly")
+                and self._method != "url"
                 and self._llm_action != "none"
             ),
             can_take_over=self._view in ("asking",) + ACTIVE_VIEWS,
