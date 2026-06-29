@@ -11,13 +11,18 @@ primary_region = "jnb"
 [[services]]
   internal_port = 8001
   protocol = "tcp"
-  # Keep the service warm. Diagnoses are infrequent, so with autostop the machine
-  # goes cold and the next diagnosis call hits a stopped/cold-starting machine —
-  # fly-proxy resets the connection (httpx ReadError) and the card hangs on
-  # "pending". An on-call diagnosis engine must answer instantly. See #66.
+  # Stay warm: an on-call diagnosis engine must answer instantly, and diagnoses
+  # are infrequent, so autostop would leave it cold.
   auto_stop_machines = "off"
-  auto_start_machines = false
+  auto_start_machines = true
   min_machines_running = 1
+
+  # Expose port 8001 over the (private) flycast IP. Without this, fly-proxy has no
+  # port handler — flycast accepts the connection then resets it (httpx ReadError),
+  # so the backend's call to komodo-llm.flycast:8001 never reaches the app and the
+  # diagnosis silently fails. Raw TCP passthrough; the app speaks HTTP on 8001. #66
+  [[services.ports]]
+    port = 8001
 
 [[vm]]
   memory = "256mb"
