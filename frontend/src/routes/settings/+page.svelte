@@ -46,6 +46,12 @@
 	let savingLlm = false;
 	let llmSavedMessage: string | null = null;
 
+	let editFlyToken = '';
+	let editFlyApps: string[] = [];
+	let newFlyApp = '';
+	let savingFly = false;
+	let flySavedMessage: string | null = null;
+
 	$: autonomy = settings?.autonomy ?? 'auto_fix';
 	$: profileDirty = user && (editName.trim() !== user.name || editPhone.trim() !== (user.phone ?? ''));
 	$: llmSettingsDirty = settings && (
@@ -56,6 +62,13 @@
 	$: llmApiKeyLabel = settings?.llm_api_key
 		? `API key (${settings.llm_api_key})`
 		: 'API key';
+	$: flyTokenLabel = settings?.fly_api_token
+		? `API token (${settings.fly_api_token})`
+		: 'API token';
+	$: flyDirty =
+		settings &&
+		(editFlyToken.trim() !== '' ||
+			JSON.stringify(editFlyApps) !== JSON.stringify(settings.fly_apps ?? []));
 
 	onMount(() => {
 		load();
@@ -89,6 +102,8 @@
 			editLlmProvider = settings.llm_provider;
 			editLlmModel = settings.llm_model;
 			editLlmApiKey = '';
+			editFlyApps = [...(settings.fly_apps ?? [])];
+			editFlyToken = '';
 		} else {
 			console.error('settings failed', settingsRes.reason);
 		}
@@ -188,6 +203,46 @@
 			}, 3000);
 		} finally {
 			savingLlm = false;
+		}
+	}
+
+	function addFlyApp() {
+		const app = newFlyApp.trim();
+		if (!app || editFlyApps.includes(app)) return;
+		editFlyApps = [...editFlyApps, app];
+		newFlyApp = '';
+	}
+
+	function removeFlyApp(app: string) {
+		editFlyApps = editFlyApps.filter((a) => a !== app);
+	}
+
+	function onFlyAppKeydown(e: KeyboardEvent) {
+		if (e.key === 'Enter') {
+			e.preventDefault();
+			addFlyApp();
+		}
+	}
+
+	async function saveFlySettings() {
+		if (!settings) return;
+		savingFly = true;
+		flySavedMessage = null;
+		try {
+			const patch: Partial<UserSettings> = { fly_apps: editFlyApps };
+			const tokenChanged = editFlyToken.trim() !== '';
+			if (tokenChanged) {
+				patch.fly_api_token = editFlyToken.trim();
+			}
+			settings = await api.settings.update(patch);
+			editFlyToken = '';
+			editFlyApps = [...(settings.fly_apps ?? [])];
+			flySavedMessage = tokenChanged ? 'Saved with new token.' : 'Saved.';
+			setTimeout(() => {
+				flySavedMessage = null;
+			}, 3000);
+		} finally {
+			savingFly = false;
 		}
 	}
 
@@ -452,6 +507,64 @@
 			</div>
 		</div>
 
+
+			<div class="mt-5 bg-white border border-surface-300 rounded-card p-5 shadow-card">
+				<div class="font-sans font-semibold text-label text-surface-700">Fly.io</div>
+				<div class="mt-1 font-sans text-xs leading-snug text-surface-500">
+					Watch services running as Fly Machines. Add a Fly API token and the apps to watch; Komodo lists each app's machines and flags any that go down. (Restarting them comes later — for now it alerts.)
+				</div>
+				{#if settings?.fly_api_token}
+					<div class="mt-3.5 flex items-center gap-3 bg-white border border-surface-300 rounded-xl px-4 py-3.5">
+						<span class="w-[7px] h-[7px] rounded-full flex-shrink-0 bg-success-500"></span>
+						<div class="font-mono text-micro text-surface-500 truncate">API token {settings.fly_api_token}</div>
+					</div>
+				{/if}
+				<div class="mt-3.5 flex flex-col gap-3">
+					<label class="flex flex-col gap-1">
+						<span class="font-sans text-micro text-surface-500">{flyTokenLabel}</span>
+						<input
+							type="password"
+							placeholder={settings?.fly_api_token ? 'Enter a new token to replace the saved one' : 'fly_...'}
+							bind:value={editFlyToken}
+							class="px-3 py-2 rounded-lg bg-white border border-surface-300 font-mono text-sm text-surface-900 focus:outline-none focus:border-surface-500"
+						/>
+					</label>
+					<div class="flex flex-col gap-1">
+						<span class="font-sans text-micro text-surface-500">Apps to watch</span>
+						{#each editFlyApps as app (app)}
+							<div class="flex items-center justify-between bg-white border border-surface-300 rounded-xl px-3.5 py-2.5">
+								<span class="font-mono text-sm text-surface-900 truncate">{app}</span>
+								<button type="button" on:click={() => removeFlyApp(app)} class="bg-transparent border-none cursor-pointer font-sans text-micro text-surface-400 hover:text-danger-600">remove</button>
+							</div>
+						{/each}
+						<div class="flex gap-2">
+							<input
+								type="text"
+								placeholder="my-fly-app"
+								bind:value={newFlyApp}
+								on:keydown={onFlyAppKeydown}
+								class="flex-1 px-3 py-2 rounded-lg bg-white border border-surface-300 font-mono text-sm text-surface-900 focus:outline-none focus:border-surface-500"
+							/>
+							<button type="button" on:click={addFlyApp} disabled={!newFlyApp.trim()} class="px-3 py-2 rounded-lg bg-white border border-surface-300 font-sans font-medium text-label text-surface-700 cursor-pointer hover:bg-surface-50 disabled:opacity-40 disabled:cursor-default">Add</button>
+						</div>
+					</div>
+					<div class="flex justify-between items-center">
+						{#if flySavedMessage}
+							<span class="font-sans text-label text-success-600">{flySavedMessage}</span>
+						{:else}
+							<span></span>
+						{/if}
+						<button
+							type="button"
+							disabled={savingFly || !flyDirty}
+							on:click={saveFlySettings}
+							class="px-4 py-2 rounded-lg bg-surface-900 text-white font-sans font-medium text-label border-none cursor-pointer hover:bg-surface-800 disabled:opacity-40 disabled:cursor-default"
+						>
+							{savingFly ? 'Saving…' : 'Save'}
+						</button>
+					</div>
+				</div>
+			</div>
 
 			<div class="mt-5 bg-white border border-surface-300 rounded-card p-5 shadow-card">
 				<div class="font-sans font-semibold text-label text-surface-700">Connected servers</div>
