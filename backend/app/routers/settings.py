@@ -21,6 +21,8 @@ def _settings_out(settings: UserSettings) -> UserSettingsOut:
         "llm_provider": settings.llm_provider,
         "llm_model": settings.llm_model,
         "llm_api_key": crypto.mask_key(decrypted),
+        "fly_api_token": crypto.mask_key(crypto.decrypt(settings.fly_api_token_encrypted)),
+        "fly_apps": settings.fly_apps or [],
     }
     return UserSettingsOut(**data)
 
@@ -45,6 +47,8 @@ def update_settings(
     data = update.model_dump(exclude_unset=True)
     if "llm_api_key" in data:
         data["llm_api_key_encrypted"] = crypto.encrypt(data.pop("llm_api_key"))
+    if "fly_api_token" in data:
+        data["fly_api_token_encrypted"] = crypto.encrypt(data.pop("fly_api_token"))
 
     for key, value in data.items():
         setattr(settings, key, value)

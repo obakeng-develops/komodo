@@ -22,7 +22,7 @@ from typing import Any
 import httpx
 from sqlalchemy.orm import Session
 
-from app import actions, executor_client, llm_client
+from app import actions, crypto, executor_client, fly, llm_client
 from app.actions import is_allowed_action as _is_allowed_action
 from app.config import get_settings
 from app.database import SessionLocal
@@ -165,6 +165,7 @@ class ServiceMonitor:
                 next_url = now + self._url_interval
                 async with self._lock:
                     await self._tick_urls()
+                    await self._tick_fly()
             except asyncio.TimeoutError:
                 continue
             except asyncio.CancelledError:
@@ -228,6 +229,92 @@ class ServiceMonitor:
                     svc.status = snap.status
                     svc.last_check_at = now
             db.commit()
+        finally:
+            db.close()
+
+    # ---- fly --------------------------------------------------------------
+
+    async def _tick_fly(self):
+        apps, token = await asyncio.to_thread(self._fly_config)
+        if not apps or not token:
+            return
+        machines_by_app: dict[str, list[dict]] = {}
+        for app in apps:
+            machines = await fly.list_machines(app, token)
+            if machines is not None:
+                machines_by_app[app] = machines
+        if not machines_by_app:
+            return
+        snapshots = await asyncio.to_thread(self._sync_fly_services, machines_by_app)
+        await self._process_sources(snapshots, source_name="fly")
+
+    def _fly_config(self) -> tuple[list[str], str | None]:
+        db = SessionLocal()
+        try:
+            user = _owner(db)
+            if not user:
+                return [], None
+            s = db.query(UserSettings).filter(UserSettings.user_id == user.id).first()
+            if not s:
+                return [], None
+            return (s.fly_apps or []), crypto.decrypt(s.fly_api_token_encrypted)
+        finally:
+            db.close()
+
+    def _sync_fly_services(self, machines_by_app: dict[str, list[dict]]) -> dict[str, _ServiceSnapshot]:
+        """One service per machine, keyed by `app/machine` so names stay unique
+        across apps. Mirrors _sync_agent_services; read-only — no fix action yet."""
+        db = SessionLocal()
+        try:
+            user = _owner(db)
+            if not user:
+                return {}
+            existing = {
+                s.name: s
+                for s in db.query(Service)
+                .filter(Service.user_id == user.id, Service.method == "fly")
+                .all()
+            }
+            now = datetime.utcnow()
+            seen: set[str] = set()
+            snapshots: dict[str, _ServiceSnapshot] = {}
+            for app, machines in machines_by_app.items():
+                for m in machines:
+                    mid = m.get("id")
+                    if not mid:
+                        continue
+                    name = f"{app}/{m.get('name') or mid}"
+                    seen.add(name)
+                    status = fly.machine_status(m.get("state"))
+                    svc = existing.get(name)
+                    if svc is None:
+                        svc = Service(
+                            user_id=user.id, host_id=None, name=name,
+                            method="fly", fly_app=app, watch_only=False,
+                        )
+                        db.add(svc)
+                    svc.method = "fly"
+                    svc.fly_app = app
+                    svc.status = status
+                    svc.last_check_at = now
+                    svc.agent_host_info = {
+                        "machine_id": mid, "app": app,
+                        "region": m.get("region"), "state": m.get("state"),
+                    }
+                    svc.allowed_fix_action = None  # read-only until remediation lands
+                    db.flush()
+                    db.refresh(svc)
+                    snapshots[name] = _ServiceSnapshot(
+                        service_id=svc.id, name=name, status=status, method="fly",
+                        host_id=None, watch_only=svc.watch_only, state=m.get("state"),
+                        allowed_fix_action=None,
+                    )
+            # A machine that's gone (destroyed, app removed) stops being a service.
+            for name, svc in existing.items():
+                if name not in seen:
+                    db.delete(svc)
+            db.commit()
+            return snapshots
         finally:
             db.close()
 
@@ -560,10 +647,11 @@ class ServiceMonitor:
 
         stream_manager.broadcast("incident_created", {"incident_id": self._incident_id})
 
-        if self._method == "url":
-            # Komodo can't restart a URL endpoint. There are no logs to fetch, so
-            # diagnose from the endpoint + status and hand it to a human — never
-            # offer a restart we can't perform. See issues #33, #35.
+        if self._method in ("url", "fly"):
+            # Komodo can't act on a URL endpoint, and can't yet act on a Fly
+            # Machine. There are no agent logs to fetch, so diagnose from status
+            # and hand it to a human — never offer a fix we can't perform.
+            # See issues #33, #35 (url) and #48 (fly).
             self._proposed_fix = None
             self._proposed_fix_action = None
             self._view = "detecting"
@@ -672,8 +760,8 @@ class ServiceMonitor:
             self._pending_agent_restarts[self._service_id] = action
             self._view = "fixing"
             self._elapsed = 0
-        elif self._method == "url":
-            await self._finish("escalated", "URL service is down — I can't restart it, handing to you")
+        elif self._method in ("url", "fly"):
+            await self._finish("escalated", "I can't act on this service automatically — handing to you")
         else:
             token = executor_client.sign_action("restart_container", self._container)
             ok, err = await executor_client.send_action(self._executor_url(), token)
@@ -853,6 +941,9 @@ class ServiceMonitor:
             if snapshot.method == "url":
                 summary = f"{snapshot.name} is down"
                 diagnosis = f"URL check to {snapshot.url} failed."
+            elif snapshot.method == "fly":
+                summary = f"{snapshot.name} is {severity}"
+                diagnosis = f"Fly machine {location} is {snapshot.state or 'not started'}."
             else:
                 state_note = snapshot.state if snapshot.status == "down" else "unhealthy"
                 summary = (
@@ -1043,7 +1134,7 @@ class ServiceMonitor:
             # won't help. See issues #33, #44.
             can_approve=(
                 self._view == "asking"
-                and self._method != "url"
+                and self._method not in ("url", "fly")
                 and self._llm_action != "none"
             ),
             can_take_over=self._view in ("asking",) + ACTIVE_VIEWS,
