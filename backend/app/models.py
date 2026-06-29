@@ -61,6 +61,9 @@ class UserSettings(Base):
     llm_provider = Column(String, nullable=False, default="deepseek")
     llm_model = Column(String, nullable=False, default="deepseek-v4-flash")
     llm_api_key_encrypted = Column(String, nullable=True)
+    # Fly.io: one org/deploy token (encrypted, like the LLM key) and the apps to watch.
+    fly_api_token_encrypted = Column(String, nullable=True)
+    fly_apps = Column(JSON, default=list, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     user = relationship("User", back_populates="settings")
@@ -72,8 +75,9 @@ class Service(Base):
     user_id = Column(String, ForeignKey("users.id"), nullable=False)
     host_id = Column(String, ForeignKey("hosts.id"), nullable=True)
     name = Column(String, nullable=False)
-    method = Column(String, nullable=False)  # agent | url
+    method = Column(String, nullable=False)  # agent | url | fly
     health_check_url = Column(String, nullable=True)
+    fly_app = Column(String, nullable=True)  # Fly app a "fly" service's machine belongs to
     agent_token = Column(String, nullable=True)
     agent_host_info = Column(JSON, nullable=True)
     watch_logs = Column(JSON, default=list, nullable=False)
