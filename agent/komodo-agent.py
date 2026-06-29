@@ -24,7 +24,7 @@ logger = logging.getLogger("komodo-agent")
 # Bumped whenever the agent script changes. Reported on every beat so Komodo can
 # flag hosts running an out-of-date agent. The server compares it against the
 # version of the script it currently serves.
-AGENT_VERSION = "2026-06-28.2"
+AGENT_VERSION = "2026-06-29"
 
 
 def run_docker_ps():
@@ -120,6 +120,28 @@ def run_docker_logs(name, tail=50):
         logger.warning("docker logs %s: %s", name, (proc.stdout or "").strip())
         return None
     return proc.stdout
+
+
+def run_docker_exit(name):
+    """Exit code + OOMKilled for a failed container — exit 137 / OOMKilled means a
+    restart won't durably fix it. Returns (exit_code, oom_killed) or (None, None)."""
+    try:
+        proc = subprocess.run(
+            ["docker", "inspect", "-f", "{{.State.ExitCode}} {{.State.OOMKilled}}", name],
+            capture_output=True,
+            text=True,
+            timeout=15,
+            check=False,
+        )
+    except Exception as exc:
+        logger.error("docker inspect %s failed: %s", name, exc)
+        return None, None
+    if proc.returncode != 0:
+        return None, None
+    parts = proc.stdout.strip().split()
+    code = int(parts[0]) if parts and parts[0].lstrip("-").isdigit() else None
+    oom = len(parts) > 1 and parts[1].lower() == "true"
+    return code, oom
 
 
 def send_beat(server, token, containers):
@@ -225,6 +247,7 @@ def main():
                 for c in containers:
                     if c["name"] in pending_logs:
                         c["logs"] = run_docker_logs(c["name"])
+                        c["exit_code"], c["oom_killed"] = run_docker_exit(c["name"])
                 pending_logs.clear()
 
             if containers:
