@@ -60,22 +60,55 @@
 		return 'text-danger-600';
 	}
 
-	// Down/degraded stretches positioned across the window, status-page style.
-	function segments(incidents: FleetIncident[]) {
+	// Status-page strip: one cell per time bucket (hourly for ≤48h, daily beyond),
+	// coloured by the worst incident overlapping that bucket. Each cell carries a
+	// title so hovering shows the day and how long it was down.
+	type Bucket = { worst: 'healthy' | 'degraded' | 'down'; start: number; downMs: number; hourly: boolean };
+
+	function buckets(incidents: FleetIncident[]): Bucket[] {
 		const now = Date.now();
-		const start = now - windowHours * 3600 * 1000;
-		const span = now - start;
-		return incidents
-			.map((inc) => {
-				const s = Math.max(utc(inc.started_at), start);
-				const e = Math.min(inc.resolved_at ? utc(inc.resolved_at) : now, now);
-				return {
-					left: ((s - start) / span) * 100,
-					width: Math.max(((e - s) / span) * 100, 0.6),
-					severity: inc.severity
-				};
-			})
-			.filter((seg) => seg.width > 0 && seg.left < 100);
+		const total = windowHours * 3600 * 1000;
+		const start = now - total;
+		const hourly = windowHours <= 48;
+		const bucketMs = (hourly ? 1 : 24) * 3600 * 1000;
+		const count = Math.round(windowHours / (hourly ? 1 : 24));
+		const out: Bucket[] = [];
+		for (let i = 0; i < count; i++) {
+			const bStart = start + i * bucketMs;
+			const bEnd = Math.min(bStart + bucketMs, now);
+			let worst: Bucket['worst'] = 'healthy';
+			let downMs = 0;
+			for (const inc of incidents) {
+				const s = Math.max(utc(inc.started_at), bStart);
+				const e = Math.min(inc.resolved_at ? utc(inc.resolved_at) : now, bEnd);
+				if (e <= s) continue;
+				if (inc.severity === 'down') {
+					worst = 'down';
+					downMs += e - s;
+				} else if (worst !== 'down') {
+					worst = 'degraded';
+				}
+			}
+			out.push({ worst, start: bStart, downMs, hourly });
+		}
+		return out;
+	}
+
+	function bucketColor(worst: Bucket['worst']) {
+		if (worst === 'down') return 'bg-danger-500';
+		if (worst === 'degraded') return 'bg-warning-500';
+		return 'bg-success-500/70';
+	}
+
+	function bucketLabel(b: Bucket) {
+		const d = new Date(b.start);
+		const when = b.hourly
+			? d.toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric' })
+			: d.toLocaleDateString([], { month: 'short', day: 'numeric' });
+		if (b.worst === 'healthy') return `${when} · all good`;
+		const mins = Math.round(b.downMs / 60000);
+		const dur = mins ? ` · ${mins}m down` : '';
+		return `${when} · ${b.worst}${dur}`;
 	}
 
 	function lastIncidentNote(svc: FleetService) {
@@ -103,7 +136,27 @@
 		</div>
 
 		{#if loading && !fleet}
-			<div class="mt-8 font-sans text-sm text-surface-500">Loading…</div>
+			<div class="mt-7 flex flex-col gap-5" aria-hidden="true">
+				{#each [0, 1] as _card}
+					<div class="bg-white border border-surface-300 rounded-card p-5 shadow-card">
+						<div class="flex items-center justify-between pb-3 border-b border-surface-100">
+							<div class="h-3 w-32 rounded bg-surface-200 animate-pulse"></div>
+							<div class="h-3 w-16 rounded bg-surface-100 animate-pulse"></div>
+						</div>
+						<div class="mt-4 flex flex-col gap-4">
+							{#each [0, 1, 2] as _row}
+								<div>
+									<div class="flex items-center justify-between">
+										<div class="h-3 w-40 rounded bg-surface-200 animate-pulse"></div>
+										<div class="h-3 w-10 rounded bg-surface-100 animate-pulse"></div>
+									</div>
+									<div class="mt-2 h-7 rounded bg-surface-100 animate-pulse"></div>
+								</div>
+							{/each}
+						</div>
+					</div>
+				{/each}
+			</div>
 		{:else if fleet && fleet.servers.length === 0}
 			<div class="mt-8 font-sans text-sm text-surface-500">
 				No servers yet. Add one in <a class="underline" href="/settings">Settings</a> and run the agent.
@@ -139,11 +192,11 @@
 											<span class="font-mono text-label {uptimeClass(svc.uptime_pct)}">{svc.uptime_pct}%</span>
 										</span>
 									</div>
-									<div class="mt-1.5 relative h-2 rounded-full bg-success-500/30 overflow-hidden">
-										{#each segments(svc.incidents) as seg}
+									<div class="mt-2 flex items-stretch gap-px h-7 rounded overflow-hidden">
+										{#each buckets(svc.incidents) as b}
 											<span
-												class="absolute top-0 h-full {seg.severity === 'down' ? 'bg-danger-500' : 'bg-warning-500'}"
-												style="left:{seg.left}%;width:{seg.width}%"
+												class="flex-1 transition-opacity hover:opacity-70 {bucketColor(b.worst)}"
+												title={bucketLabel(b)}
 											></span>
 										{/each}
 									</div>

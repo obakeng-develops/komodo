@@ -8,6 +8,8 @@
 	import { cardReceive, cardSend, contentFly } from '$lib/animation';
 	import AutonomyToggle from '$lib/components/AutonomyToggle.svelte';
 	import Timeline from '$lib/components/Timeline.svelte';
+	import Button from '$lib/components/ui/Button.svelte';
+	import Badge from '$lib/components/ui/Badge.svelte';
 	import { groupByServer, serverRollup } from '$lib/grouping';
 	import type { Service, UserSettings } from '$lib/types';
 
@@ -110,14 +112,15 @@
 		return 'bg-surface-500';
 	}
 
-	function badgeClasses() {
-		if (!$activeIncident) return '';
-		const base = 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full font-medium text-[11px] font-sans flex-shrink-0';
-		if ($activeIncident.view === 'asking') return `${base} border border-dashed border-surface-800 text-surface-800`;
-		if ($activeIncident.view === 'takeover') return `${base} border border-dashed border-surface-500 text-surface-500`;
-		if ($activeIncident.view === 'resolved') return `${base} border border-surface-300 text-surface-700`;
-		return `${base} bg-surface-900 text-white`;
+	// The state pill's look, as Badge props (folds the old bespoke badge into the
+	// shared primitive). See #50.
+	function badgeProps(view?: string): { variant: 'solid' | 'outline' | 'dashed'; tone: 'dark' | 'neutral' } {
+		if (view === 'asking') return { variant: 'dashed', tone: 'dark' };
+		if (view === 'takeover') return { variant: 'dashed', tone: 'neutral' };
+		if (view === 'resolved') return { variant: 'outline', tone: 'neutral' };
+		return { variant: 'solid', tone: 'dark' };
 	}
+	$: badge = badgeProps($activeIncident?.view);
 
 	function badgeLabel() {
 		if (!$activeIncident) return '';
@@ -128,7 +131,7 @@
 	}
 
 	function shellClasses() {
-		const base = 'bg-white border rounded-2xl shadow-card overflow-hidden transition-colors duration-300';
+		const base = 'bg-white border rounded-card shadow-card overflow-hidden transition-colors duration-300';
 		if ($activeIncident?.view === 'asking') return `${base} border-surface-800`;
 		if (['detecting', 'diagnosing', 'fixing', 'verifying'].includes($activeIncident?.view || '')) {
 			return `${base} border-surface-900`;
@@ -227,13 +230,10 @@
 										{$activeIncident.service_name} is down. I can {actionVerb($activeIncident.proposed_action)} it — want me to?
 									{/if}
 								</div>
-								<span class={badgeClasses()}>{badgeLabel()}</span>
-							</div>
-							<div class="mt-5">
-								<Timeline items={$activeIncident.timeline} />
+								<Badge pill variant={badge.variant} tone={badge.tone}>{badgeLabel()}</Badge>
 							</div>
 							{#if $activeIncident.llm_diagnosis}
-								<div class="mt-4 px-4 py-3 rounded-lg bg-surface-50 border border-surface-200">
+								<div class="mt-5 px-4 py-3 rounded-lg bg-surface-50 border border-surface-200">
 									<div class="font-mono text-[11px] text-surface-500 tracking-wide uppercase">Diagnosis</div>
 									<div class="mt-1.5 font-sans text-[15px] leading-relaxed text-surface-700">
 										{$activeIncident.llm_diagnosis}
@@ -245,13 +245,16 @@
 									{/if}
 								</div>
 							{:else}
-								<div class="mt-4 px-4 py-3 rounded-lg bg-surface-50 border border-surface-200">
+								<div class="mt-5 px-4 py-3 rounded-lg bg-surface-50 border border-surface-200">
 									<div class="font-mono text-[11px] text-surface-500 tracking-wide uppercase">Diagnosis</div>
 									<div class="mt-1.5 font-sans text-[15px] leading-relaxed text-surface-700">
 										Diagnosis pending…
 									</div>
 								</div>
 							{/if}
+							<div class="mt-4">
+								<Timeline items={$activeIncident.timeline} />
+							</div>
 							{#if $activeIncident.proposed_fix}
 								<div class="mt-4 px-4 py-3 rounded-lg bg-surface-50 border border-surface-200">
 									<div class="font-mono text-[11px] text-surface-500 tracking-wide uppercase">suggested fix</div>
@@ -278,19 +281,11 @@
 							</div>
 							<div class="mt-5 pt-5 border-t border-surface-200 flex flex-col sm:flex-row sm:items-center gap-3">
 								{#if $activeIncident.can_approve}
-									<button
-										class="inline-flex items-center justify-center px-5 py-2.5 rounded-lg bg-surface-900 text-white font-sans font-medium text-sm border-none cursor-pointer hover:bg-surface-800"
-										on:click={approve}
-									>
+									<Button size="lg" on:click={approve}>
 										Approve {actionVerb($activeIncident.proposed_action)}
-									</button>
+									</Button>
 								{/if}
-								<button
-									class="inline-flex items-center justify-center px-4 py-2.5 rounded-lg bg-white text-surface-700 font-sans font-medium text-sm border border-surface-300 cursor-pointer hover:bg-surface-50"
-									on:click={takeOver}
-								>
-									I'll handle it
-								</button>
+								<Button size="lg" variant="secondary" on:click={takeOver}>I'll handle it</Button>
 							</div>
 						</div>
 					{:else if ['detecting', 'diagnosing', 'fixing', 'verifying'].includes($activeIncident.view)}
@@ -299,13 +294,10 @@
 								<div class="font-serif text-title leading-snug text-surface-900 tracking-tight">
 									{$activeIncident.service_name} is stuck. I'm {actionGerund($activeIncident.proposed_action)} it.
 								</div>
-								<span class={badgeClasses()}>{badgeLabel()}</span>
-							</div>
-							<div class="mt-5">
-								<Timeline items={$activeIncident.timeline} />
+								<Badge pill variant={badge.variant} tone={badge.tone}>{badgeLabel()}</Badge>
 							</div>
 							{#if $activeIncident.llm_diagnosis}
-								<div class="mt-4 px-4 py-3 rounded-lg bg-surface-50 border border-surface-200">
+								<div class="mt-5 px-4 py-3 rounded-lg bg-surface-50 border border-surface-200">
 									<div class="font-mono text-[11px] text-surface-500 tracking-wide uppercase">Diagnosis</div>
 									<div class="mt-1.5 font-sans text-[15px] leading-relaxed text-surface-700">
 										{$activeIncident.llm_diagnosis}
@@ -317,13 +309,16 @@
 									{/if}
 								</div>
 							{:else}
-								<div class="mt-4 px-4 py-3 rounded-lg bg-surface-50 border border-surface-200">
+								<div class="mt-5 px-4 py-3 rounded-lg bg-surface-50 border border-surface-200">
 									<div class="font-mono text-[11px] text-surface-500 tracking-wide uppercase">Diagnosis</div>
 									<div class="mt-1.5 font-sans text-[15px] leading-relaxed text-surface-700">
 										Diagnosis pending…
 									</div>
 								</div>
 							{/if}
+							<div class="mt-4">
+								<Timeline items={$activeIncident.timeline} />
+							</div>
 							{#if $activeIncident.proposed_fix}
 								<div class="mt-4 px-4 py-3 rounded-lg bg-surface-50 border border-surface-200">
 									<div class="font-mono text-[11px] text-surface-500 tracking-wide uppercase">suggested fix</div>
@@ -350,12 +345,7 @@
 							</div>
 							<div class="mt-5 pt-5 border-t border-surface-200 flex flex-wrap justify-between items-center gap-3">
 								<div class="flex items-center gap-3">
-									<button
-										class="inline-flex items-center justify-center px-5 py-2.5 rounded-lg bg-surface-900 text-white font-sans font-medium text-sm border-none cursor-pointer hover:bg-surface-800"
-										on:click={takeOver}
-									>
-										Take over
-									</button>
+									<Button size="lg" on:click={takeOver}>Take over</Button>
 								</div>
 								<span class="font-mono text-[12px] text-surface-500 flex items-center gap-1.5">
 									<span class="text-surface-900">✓</span> messaged your phone
@@ -364,7 +354,7 @@
 						</div>
 					{:else if $activeIncident.view === 'resolved'}
 						<div class="p-5 sm:p-9" in:contentFly|local>
-							<div class={badgeClasses()}>{badgeLabel()}</div>
+							<Badge pill variant={badge.variant} tone={badge.tone}>{badgeLabel()}</Badge>
 							<div class="mt-4 font-serif text-title leading-tight text-surface-900 tracking-tight">{$activeIncident.service_name} is back.</div>
 							<div class="mt-3.5 font-sans text-base leading-relaxed text-surface-600">
 								Down for <span class="font-mono text-sm text-surface-900">{$activeIncident.elapsed}s</span>. Health check is green again.
@@ -407,12 +397,7 @@
 									>{#if trimmedLogLines.length}{trimmedLogLines.join('\n')}{:else}<span class="text-surface-500">No logs captured.</span>{/if}</pre>
 							</div>
 							<div class="mt-7 pt-5 border-t border-surface-200 flex flex-wrap justify-between items-center gap-3">
-								<button
-									class="inline-flex items-center justify-center px-5 py-2.5 rounded-lg bg-surface-900 text-white font-sans font-medium text-sm border-none cursor-pointer hover:bg-surface-800"
-									on:click={backToWatching}
-								>
-									Back to watching
-								</button>
+								<Button size="lg" on:click={backToWatching}>Back to watching</Button>
 								<button
 									class="bg-transparent border-none cursor-pointer font-mono text-xs text-surface-500 underline underline-offset-[3px] decoration-surface-400 hover:text-surface-900"
 									on:click={() => goto('/incidents')}
@@ -423,7 +408,7 @@
 						</div>
 					{:else if $activeIncident.view === 'takeover'}
 						<div class="p-5 sm:p-9" in:contentFly|local>
-							<div class={badgeClasses()}>{badgeLabel()}</div>
+							<Badge pill variant={badge.variant} tone={badge.tone}>{badgeLabel()}</Badge>
 							<div class="mt-4 font-serif text-title leading-snug text-surface-900 tracking-tight">Okay — it's yours.</div>
 							{#if $activeIncident.method === 'url'}
 								<div class="mt-3.5 font-serif text-base leading-relaxed text-surface-600">
@@ -445,18 +430,8 @@
 								<button class="bg-transparent border-none cursor-pointer font-medium text-xs font-mono text-surface-600 underline underline-offset-[3px] decoration-surface-400 hover:text-surface-900">open /healthz ↗</button>
 							</div>
 							<div class="mt-6 pt-5 border-t border-surface-200 flex flex-col sm:flex-row sm:items-center gap-3">
-								<button
-									class="inline-flex items-center justify-center px-5 py-2.5 rounded-lg bg-surface-900 text-white font-sans font-medium text-sm border-none cursor-pointer hover:bg-surface-800"
-									on:click={manualResolve}
-								>
-									Mark it resolved
-								</button>
-								<button
-									class="inline-flex items-center justify-center px-4 py-2.5 rounded-lg bg-white text-surface-700 font-sans font-medium text-sm border border-surface-300 cursor-pointer hover:bg-surface-50"
-									on:click={handBack}
-								>
-									Hand back to the agent
-								</button>
+								<Button size="lg" on:click={manualResolve}>Mark it resolved</Button>
+								<Button size="lg" variant="secondary" on:click={handBack}>Hand back to the agent</Button>
 							</div>
 						</div>
 					{/if}
