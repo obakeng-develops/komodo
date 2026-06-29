@@ -40,8 +40,10 @@ def _platform_guidance(method: str) -> str:
         "`docker restart` (bounce it — the usual fix), `docker stop` (stop a container "
         "that is crash-looping or thrashing the host, to stop the bleeding), or "
         "`docker start` (start one that was cleanly stopped). If none of these will help, "
-        "say a human is needed and what to check. Do NOT suggest kubectl, systemd, cloud "
-        "consoles, or any tool Komodo does not have."
+        "say a human is needed and what to check. If the container was OOM-killed or exited "
+        "137, a restart will NOT durably fix it — it will hit the same limit again; choose "
+        "ACTION none and tell the person to raise the memory limit or fix the leak. Do NOT "
+        "suggest kubectl, systemd, cloud consoles, or any tool Komodo does not have."
     )
 
 
@@ -71,6 +73,10 @@ def _user_prompt(context: dict) -> str:
         lines.append(f"Container state: {context['container_state']}")
     if context.get("container_health"):
         lines.append(f"Container health: {context['container_health']}")
+    if context.get("exit_code") is not None:
+        lines.append(f"Exit code: {context['exit_code']}")
+    if context.get("oom_killed"):
+        lines.append("OOM-killed: true (the kernel killed it for exceeding its memory limit)")
     if context.get("location"):
         lines.append(f"Location: {context['location']}")
     logs = context.get("logs")
