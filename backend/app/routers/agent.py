@@ -1,5 +1,4 @@
 import asyncio
-import logging
 import re
 from datetime import datetime
 from functools import lru_cache
@@ -10,12 +9,11 @@ from sqlalchemy.orm import Session
 
 from app.config import ROOT
 from app.deps import get_current_host, get_db_session
+from app.events import log_event
 from app.models import Host
 from app.monitor import monitor
 from app.schemas import AgentBeatPayload, AgentBeatResponse, AgentLogPayload
 from app.stream import stream_manager
-
-logger = logging.getLogger("oncall.agent")
 
 router = APIRouter(prefix="/agent", tags=["agent"])
 
@@ -48,7 +46,17 @@ async def agent_beat(
         host.agent_version = payload.agent_version
     db.add(host)
     db.commit()
-    logger.info("host=%s beat received containers=%d restart_actions=%d", host.name, len(payload.containers), len(restart_actions))
+    cur = current_agent_version()
+    log_event(
+        "agent_beat",
+        host=host.name,
+        agent_version=payload.agent_version,
+        agent_outdated=bool(cur and payload.agent_version and payload.agent_version != cur),
+        containers=len(payload.containers),
+        down=sum(1 for c in payload.containers if c.get("status") == "down"),
+        degraded=sum(1 for c in payload.containers if c.get("status") == "degraded"),
+        actions=len(restart_actions),
+    )
     stream_manager.broadcast("services_changed", {})
     tail_logs, _ = monitor.should_tail_logs()
     # `actions` carries every approved action; `restart` is the restart-only
