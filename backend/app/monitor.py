@@ -458,8 +458,12 @@ class ServiceMonitor:
                             self._llm_confidence = result["confidence"]
                             # The model proposes; the server still validates against
                             # the whitelist before anything runs. "none" means the
-                            # model judged a restart won't help. See issue #44.
+                            # model judged no action will help. See issues #44.
                             self._llm_action = result.get("action")
+                            # Let the model's pick be the action we'd run (still
+                            # whitelist-checked at execution).
+                            if self._llm_action in ("restart_container", "stop_container", "start_container") and self._container:
+                                self._proposed_fix_action = {"action": self._llm_action, "container": self._container}
                         self._llm_ready.set()
                         self._broadcast_state()
         finally:
@@ -996,6 +1000,11 @@ class ServiceMonitor:
             service_name=self._service_name,
             host_id=self._host_id,
             method=self._method,
+            proposed_action=(
+                self._proposed_fix_action.get("action")
+                if isinstance(self._proposed_fix_action, dict)
+                else None
+            ),
             view=self._view,
             elapsed=self._elapsed,
             autonomy=self._autonomy,

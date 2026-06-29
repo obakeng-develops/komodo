@@ -36,11 +36,12 @@ def _platform_guidance(method: str) -> str:
             "person should check or do, not a command Komodo can run."
         )
     return (
-        "This service runs as a Docker container. The ONLY remediation Komodo can "
-        "perform is `docker restart <container>`. If a restart is the right first step, "
-        "say so in FIX. If a restart will not help, say a human is needed and what to "
-        "check. Do NOT suggest kubectl, systemd, cloud consoles, or any tool Komodo "
-        "does not have."
+        "This service runs as a Docker container. Komodo can run exactly one of: "
+        "`docker restart` (bounce it — the usual fix), `docker stop` (stop a container "
+        "that is crash-looping or thrashing the host, to stop the bleeding), or "
+        "`docker start` (start one that was cleanly stopped). If none of these will help, "
+        "say a human is needed and what to check. Do NOT suggest kubectl, systemd, cloud "
+        "consoles, or any tool Komodo does not have."
     )
 
 
@@ -51,8 +52,8 @@ def _system_prompt(method: str) -> str:
         + " Be concise. Respond with exactly four lines in this format:\n"
         "CAUSE: one-sentence likely root cause\n"
         "FIX: one concrete action within Komodo's abilities described above\n"
-        "ACTION: restart_container if a docker restart is the right fix, or none "
-        "if a restart won't help or there is nothing Komodo can run\n"
+        "ACTION: one of restart_container, stop_container, start_container, or none "
+        "(none if no Komodo action will help)\n"
         "CONFIDENCE: low | medium | high\n"
         "Do not add extra commentary."
     )
@@ -90,7 +91,11 @@ def _parse_response(text: str) -> dict:
         elif line.startswith("ACTION:"):
             raw = line.replace("ACTION:", "").strip().lower()
             # The model only chooses; the server validates against the whitelist.
-            result["action"] = "restart_container" if "restart_container" in raw else "none"
+            result["action"] = "none"
+            for cand in ("restart_container", "stop_container", "start_container"):
+                if cand in raw:
+                    result["action"] = cand
+                    break
         elif line.startswith("CONFIDENCE:"):
             raw = line.replace("CONFIDENCE:", "").strip().lower()
             if raw in ("low", "medium", "high"):
