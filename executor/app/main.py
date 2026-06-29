@@ -1,4 +1,6 @@
 import json
+import logging
+import time
 from contextlib import asynccontextmanager
 from datetime import datetime
 
@@ -8,6 +10,15 @@ from pydantic import BaseModel
 from app.auth import validate_action_token, verify_internal_state
 from app.config import get_settings
 from app.dockerctl import list_containers, restart, start, stop, logs
+
+_events = logging.getLogger("executor.events")
+
+
+def log_event(event: str, **fields) -> None:
+    """One wide JSON line per action (see Komodo issue #54)."""
+    payload = {"event": event, "ts": datetime.utcnow().isoformat() + "Z"}
+    payload.update({k: v for k, v in fields.items() if v is not None})
+    _events.info(json.dumps(payload, default=str, sort_keys=True))
 
 
 class ExecuteRequest(BaseModel):
@@ -62,7 +73,15 @@ async def execute(req: ExecuteRequest):
         raise HTTPException(status_code=401, detail="Invalid action token")
     if req.internal_state and not await verify_internal_state(req.internal_state):
         raise HTTPException(status_code=401, detail="Invalid internal state")
+    t0 = time.monotonic()
     ok, output = await _run_action(payload)
+    log_event(
+        "executor_action",
+        action=payload.get("action"),
+        container=payload.get("container"),
+        ok=ok,
+        duration_ms=round((time.monotonic() - t0) * 1000),
+    )
     return ExecuteResponse(ok=ok, output=output)
 
 
