@@ -1,4 +1,6 @@
 import hmac
+import logging
+import sys
 from contextlib import asynccontextmanager
 
 from fastapi import Depends, FastAPI, Header, HTTPException
@@ -6,6 +8,20 @@ from pydantic import BaseModel
 
 from app.config import get_settings
 from app.llm import diagnose
+
+
+def _configure_logging() -> None:
+    """Send the service's `llm.*` logs to stdout at INFO. uvicorn leaves the root
+    logger without an INFO handler, so otherwise the diagnosis reasons (no key,
+    parse failure, upstream error) are silently dropped. See Komodo #61/#66."""
+    llm = logging.getLogger("llm")
+    if llm.handlers:
+        return
+    handler = logging.StreamHandler(sys.stdout)
+    handler.setFormatter(logging.Formatter("%(asctime)s %(name)s %(levelname)s %(message)s"))
+    llm.addHandler(handler)
+    llm.setLevel(logging.INFO)
+    llm.propagate = False
 
 
 class DiagnoseRequest(BaseModel):
@@ -32,6 +48,7 @@ def _verify_internal_key(x_internal_api_key: str | None = Header(None)):
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    _configure_logging()
     yield
 
 

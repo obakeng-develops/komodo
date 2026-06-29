@@ -531,12 +531,21 @@ class ServiceMonitor:
             ),
             "logs": logs,
         }
-        result = await llm_client.diagnose(
-            context,
-            api_key_encrypted=settings.llm_api_key_encrypted,
-            provider=settings.llm_provider,
-            model=settings.llm_model,
-        )
+        try:
+            result = await llm_client.diagnose(
+                context,
+                api_key_encrypted=settings.llm_api_key_encrypted,
+                provider=settings.llm_provider,
+                model=settings.llm_model,
+            )
+        except Exception as exc:
+            # The callers swallow exceptions to keep the incident moving; without
+            # this line a failed diagnosis is invisible and the card hangs on
+            # "pending" with no trace. See #66.
+            logger.warning("diagnosis call failed: incident=%s service=%s method=%s: %r", incident_id, service.name, service.method, exc)
+            result = None
+        if not result:
+            logger.info("no diagnosis returned: incident=%s service=%s method=%s", incident_id, service.name, service.method)
         db = SessionLocal()
         try:
             incident = db.query(Incident).filter(Incident.id == incident_id).first()
