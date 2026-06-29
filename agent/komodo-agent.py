@@ -24,7 +24,7 @@ logger = logging.getLogger("komodo-agent")
 # Bumped whenever the agent script changes. Reported on every beat so Komodo can
 # flag hosts running an out-of-date agent. The server compares it against the
 # version of the script it currently serves.
-AGENT_VERSION = "2026-06-28"
+AGENT_VERSION = "2026-06-28.2"
 
 
 def run_docker_ps():
@@ -72,18 +72,32 @@ def run_docker_ps():
     return containers
 
 
-def docker_restart(name):
+# The docker subcommand Komodo may run for each whitelisted action.
+_ACTION_CMD = {
+    "restart_container": "restart",
+    "stop_container": "stop",
+    "start_container": "start",
+}
+
+
+def docker_action(action_name, name):
+    cmd = _ACTION_CMD.get(action_name)
+    if not cmd:
+        logger.warning("unknown action %s for %s — skipping", action_name, name)
+        return False
     try:
         proc = subprocess.run(
-            ["docker", "restart", name],
+            ["docker", cmd, name],
             capture_output=True,
             text=True,
             timeout=60,
             check=False,
         )
+        if proc.returncode != 0:
+            logger.warning("docker %s %s: %s", cmd, name, proc.stderr.strip())
         return proc.returncode == 0
     except Exception as exc:
-        logger.error("docker restart %s failed: %s", name, exc)
+        logger.error("docker %s %s failed: %s", cmd, name, exc)
         return False
 
 
@@ -216,17 +230,21 @@ def main():
             if containers:
                 response = send_beat(args.server, args.token, containers)
                 if response:
-                    for action in response.get("restart", []):
-                        # The backend sends action dicts ({"action": ..., "container": ...});
-                        # tolerate a bare name string too.
-                        name = action.get("container") if isinstance(action, dict) else action
+                    # The backend sends approved action dicts ({"action": ...,
+                    # "container": ...}); tolerate a bare name (an old restart).
+                    for action in response.get("actions", response.get("restart", [])):
+                        if isinstance(action, dict):
+                            name = action.get("container")
+                            act = action.get("action", "restart_container")
+                        else:
+                            name, act = action, "restart_container"
                         if not name:
                             continue
-                        logger.info("restarting %s", name)
-                        if docker_restart(name):
-                            logger.info("restarted %s", name)
+                        logger.info("running %s on %s", act, name)
+                        if docker_action(act, name):
+                            logger.info("%s ok: %s", act, name)
                         else:
-                            logger.error("failed to restart %s", name)
+                            logger.error("%s failed: %s", act, name)
                     pending_logs.update(response.get("fetch_logs", []))
 
                     want_tail = response.get("tail_logs", False)

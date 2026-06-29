@@ -11,6 +11,7 @@ logger = logging.getLogger("oncall.actions")
 _ALLOWED_ACTIONS = {
     "restart_container",
     "stop_container",
+    "start_container",
     "fetch_logs",
     "list_containers",
 }
