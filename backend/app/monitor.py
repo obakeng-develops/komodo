@@ -26,6 +26,7 @@ from app import actions, executor_client, llm_client
 from app.actions import is_allowed_action as _is_allowed_action
 from app.config import get_settings
 from app.database import SessionLocal
+from app.events import log_event
 from app.models import Guardrail, Host, Incident, IncidentEvent, Learning, Service, User, UserSettings
 from app.schemas import ActiveIncidentState
 from app.stream import stream_manager
@@ -102,6 +103,7 @@ class ServiceMonitor:
         self._task: asyncio.Task | None = None
         self._lock = asyncio.Lock()
         self._incident_id: str | None = None
+        self._opened_at: datetime | None = None  # set on open; for the wide event's duration
         self._view: str = "resting"
         self._elapsed: int = 0
         self._autonomy: str = "ask_first"
@@ -538,6 +540,7 @@ class ServiceMonitor:
         if not info:
             return
         self._incident_id = info["incident_id"]
+        self._opened_at = datetime.utcnow()
         self._service_id = info["service_id"]
         self._user_id = info["user_id"]
         self._service_name = target.name
@@ -666,15 +669,12 @@ class ServiceMonitor:
                 logger.warning("refusing disallowed action: %s", action)
                 await self._finish("escalated", "Refusing unsafe fix command — handed to you")
                 return
-            logger.info("action=restart_queued incident=%s service=%s action=%s", self._incident_id, self._service_name, action)
             self._pending_agent_restarts[self._service_id] = action
             self._view = "fixing"
             self._elapsed = 0
         elif self._method == "url":
-            logger.info("action=escalate incident=%s service=%s reason=url_method", self._incident_id, self._service_name)
             await self._finish("escalated", "URL service is down — I can't restart it, handing to you")
         else:
-            logger.info("action=restart_local incident=%s service=%s container=%s", self._incident_id, self._service_name, self._container)
             token = executor_client.sign_action("restart_container", self._container)
             ok, err = await executor_client.send_action(self._executor_url(), token)
             if not ok:
@@ -690,7 +690,6 @@ class ServiceMonitor:
         async with self._lock:
             if self._view != "asking":
                 return self._build_state()
-            logger.info("action=approve incident=%s service=%s user=%s", self._incident_id, self._service_name, self._user_id)
             await self._do_restart()
             self._broadcast_state()
             return self._build_state()
@@ -699,7 +698,6 @@ class ServiceMonitor:
         async with self._lock:
             if self._view not in ("asking",) + ACTIVE_VIEWS:
                 return self._build_state()
-            logger.info("action=take_over incident=%s service=%s user=%s", self._incident_id, self._service_name, self._user_id)
             self._view = "takeover"
             self._tail_logs = False
             if self._awaiting_logs_task and not self._awaiting_logs_task.done():
@@ -712,7 +710,6 @@ class ServiceMonitor:
         async with self._lock:
             if self._view != "takeover":
                 return self._build_state()
-            logger.info("action=hand_back incident=%s service=%s user=%s", self._incident_id, self._service_name, self._user_id)
             self._tail_logs = True
             await self._do_restart()
             self._broadcast_state()
@@ -722,8 +719,6 @@ class ServiceMonitor:
         async with self._lock:
             if self._view in ("resting", "resolved"):
                 return self._build_state()
-            status = "took_over" if manual else "resolved"
-            logger.info("action=resolve incident=%s service=%s status=%s user=%s", self._incident_id, self._service_name, status, self._user_id)
             if manual:
                 await self._finish("took_over", "You took it")
             else:
@@ -809,6 +804,26 @@ class ServiceMonitor:
 
     async def _finish(self, status: str, action: str):
         await asyncio.to_thread(self._resolve_incident, status, action)
+        # One wide event per incident: the whole life in a single line.
+        log_event(
+            "incident_resolved",
+            incident_id=self._incident_id,
+            service=self._service_name,
+            host_id=self._host_id,
+            method=self._method,
+            severity=self._severity,
+            autonomy=self._autonomy,
+            final_status=status,
+            action_taken=action,
+            llm_diagnosis=self._llm_diagnosis,
+            llm_confidence=self._llm_confidence,
+            llm_action=self._llm_action,
+            proposed_action=(self._proposed_fix_action or {}).get("action"),
+            user_id=self._user_id,
+            duration_s=int((datetime.utcnow() - self._opened_at).total_seconds())
+            if self._opened_at
+            else None,
+        )
         self._view = "resolved"
         self._tail_logs = False
         self._llm_diagnosis = None
@@ -876,7 +891,16 @@ class ServiceMonitor:
             # production box, auto-fix elsewhere). Null means use the global one.
             host = db.query(Host).filter(Host.id == service.host_id).first() if service.host_id else None
             autonomy = (host.autonomy if host and host.autonomy else settings.autonomy)
-            logger.info("action=incident_opened incident=%s service=%s user=%s severity=%s autonomy=%s", incident.id, service.name, user.id, severity, autonomy)
+            log_event(
+                "incident_opened",
+                incident_id=incident.id,
+                service=service.name,
+                host_id=service.host_id,
+                method=snapshot.method,
+                severity=severity,
+                autonomy=autonomy,
+                user_id=user.id,
+            )
             return {
                 "incident_id": incident.id,
                 "service_id": service.id,

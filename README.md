@@ -27,6 +27,7 @@ The docs follow [Diátaxis](https://diataxis.fr/). Pick the door that matches wh
 **Looking up.** You need a fact.
 - [Configuration](docs/reference/configuration.md)
 - [Architecture](docs/reference/architecture.md)
+- [Events](docs/reference/events.md)
 
 **Understanding.** You want to know why.
 - [How Komodo works](docs/explanation/how-komodo-works.md)
