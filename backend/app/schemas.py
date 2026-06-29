@@ -64,6 +64,8 @@ class UserSettingsOut(BaseModel):
     llm_provider: str
     llm_model: str
     llm_api_key: str | None = None
+    fly_api_token: str | None = None
+    fly_apps: list[str] = []
 
 
 class UserSettingsUpdate(BaseModel):
@@ -75,6 +77,8 @@ class UserSettingsUpdate(BaseModel):
     llm_provider: str | None = None
     llm_model: str | None = None
     llm_api_key: str | None = None
+    fly_api_token: str | None = None
+    fly_apps: list[str] | None = None
 
 
 class ServiceOut(BaseModel):

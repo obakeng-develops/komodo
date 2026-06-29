@@ -51,6 +51,9 @@ async def lifespan(app: FastAPI):
     with engine.begin() as conn:
         conn.execute(text("ALTER TABLE hosts ADD COLUMN IF NOT EXISTS autonomy VARCHAR"))
         conn.execute(text("ALTER TABLE hosts ADD COLUMN IF NOT EXISTS agent_version VARCHAR"))
+        conn.execute(text("ALTER TABLE user_settings ADD COLUMN IF NOT EXISTS fly_api_token_encrypted VARCHAR"))
+        conn.execute(text("ALTER TABLE user_settings ADD COLUMN IF NOT EXISTS fly_apps JSON"))
+        conn.execute(text("ALTER TABLE services ADD COLUMN IF NOT EXISTS fly_app VARCHAR"))
     ensure_seed_data()
     await monitor.start()
     yield

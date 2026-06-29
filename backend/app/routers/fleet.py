@@ -35,7 +35,7 @@ class FleetService(BaseModel):
 
 
 class FleetServer(BaseModel):
-    name: str  # host name, or "URL checks" for services with no host
+    name: str  # host name, a Fly app, or "URL checks" for host-less services
     down: int
     degraded: int
     services: list[FleetService]
@@ -88,7 +88,12 @@ def get_fleet(
             ))
         downtime = min(downtime, window_seconds)
         uptime_pct = round(100.0 * (1 - downtime / window_seconds), 3)
-        server = s.host.name if s.host else "URL checks"
+        if s.host:
+            server = s.host.name
+        elif s.method == "fly":
+            server = s.fly_app or "Fly"
+        else:
+            server = "URL checks"
         groups.setdefault(server, []).append(FleetService(
             id=s.id, name=s.name, status=s.status, watch_only=s.watch_only,
             uptime_pct=uptime_pct, incidents=out[:10],

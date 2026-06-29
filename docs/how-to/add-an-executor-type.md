@@ -9,6 +9,12 @@ carried by the service's `method`:
 Adding a new type, say Kubernetes, means teaching four parts of the system about it. Only one of them
 is a one-line change; the rest is real work, so this guide is a map, not a recipe.
 
+> **Worked example: Fly.io.** The `fly` executor type follows this map. Read it as you go:
+> the reporter is a backend poller (`_tick_fly` / `_sync_fly_services` in `backend/app/monitor.py`,
+> mirroring the URL checker) over the Machines API client in `backend/app/fly.py`; the model context
+> is the `fly` case in `_platform_guidance`; the remediation calls the Machines API in-process. Status
+> reporting shipped first (read-only); remediation followed behind the same whitelist + approve rail.
+
 ## 1. Report the services
 
 Something has to tell Komodo what services exist and whether they are healthy. For Docker that is the
@@ -17,8 +23,9 @@ The backend turns that into services with `method = "agent"` in `_sync_agent_ser
 (`backend/app/monitor.py`).
 
 A new platform needs its own reporter that posts services tagged with the new method, and a backend
-path that accepts them. The beat endpoint is shaped around Docker containers, so this is the largest
-piece.
+path that accepts them. Fly doesn't run our agent, so its reporter is a backend-side poller that lists
+an app's machines and maps each machine's state to a status — see `_tick_fly` in `monitor.py`. The
+agent beat endpoint is shaped around Docker containers, so a push-based platform is the largest piece.
 
 ## 2. Give the model the right context
 
