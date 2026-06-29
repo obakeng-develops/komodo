@@ -316,6 +316,10 @@ class ServiceMonitor:
                     "state": c.get("state"),
                     "health": c.get("health"),
                     "host_name": host.name,
+                    # Present on the log-fetch beat for a failed container; exit 137
+                    # / oom_killed means a restart won't durably fix it. See #43.
+                    "exit_code": c.get("exit_code"),
+                    "oom_killed": c.get("oom_killed"),
                 }
                 # ponytail: fetch logs once on transition to failed so the
                 # diagnosis has context. The agent returns them on next beat.
@@ -422,6 +426,8 @@ class ServiceMonitor:
             "image": service.agent_host_info.get("image") if service.agent_host_info else None,
             "container_state": service.agent_host_info.get("state") if service.agent_host_info else None,
             "container_health": service.agent_host_info.get("health") if service.agent_host_info else None,
+            "exit_code": service.agent_host_info.get("exit_code") if service.agent_host_info else None,
+            "oom_killed": service.agent_host_info.get("oom_killed") if service.agent_host_info else None,
             "location": (
                 service.health_check_url
                 if service.method == "url" and service.health_check_url
