@@ -1,6 +1,6 @@
 <script lang="ts">
 	export let variant: 'primary' | 'secondary' | 'ghost' | 'danger' = 'primary';
-	export let size: 'sm' | 'md' = 'md';
+	export let size: 'sm' | 'md' | 'lg' = 'md';
 	export let type: 'button' | 'submit' = 'button';
 	export let disabled = false;
 
@@ -12,7 +12,8 @@
 	};
 	const sizes: Record<string, string> = {
 		sm: 'px-3 py-1.5 text-label',
-		md: 'px-4 py-2 text-label'
+		md: 'px-4 py-2 text-label',
+		lg: 'px-5 py-2.5 text-body'
 	};
 </script>
 
