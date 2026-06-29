@@ -104,6 +104,7 @@ class ServiceMonitor:
         self._lock = asyncio.Lock()
         self._incident_id: str | None = None
         self._opened_at: datetime | None = None  # set on open; for the wide event's duration
+        self._fixing_since: datetime | None = None  # set when a restart is issued; drives the verify timeout
         self._view: str = "resting"
         self._elapsed: int = 0
         self._autonomy: str = "ask_first"
@@ -592,18 +593,26 @@ class ServiceMonitor:
 
     async def _advance_active(self, by_name: dict[str, _ServiceSnapshot]):
         cur = by_name.get(self._container)
-        self._elapsed += get_settings().url_poll_seconds
+        now = datetime.utcnow()
+        # Display elapsed is wall-clock since the incident opened — NOT a per-tick
+        # counter. _advance_active fires on every source tick (URL poll, Fly poll,
+        # and every agent beat), so counting ticks let unrelated agent beats from
+        # other hosts fast-forward the clock. See #67.
+        if self._opened_at:
+            self._elapsed = int((now - self._opened_at).total_seconds())
         if cur and cur.status == "healthy":
             await self._finish("resolved", f"Restarted {self._container} — it came back healthy")
             return
-        # Only the verify timer escalates here, and only once we've actually
-        # attempted a restart. During detecting/diagnosing (ask_first waiting on
-        # logs, the LLM, or a human) the incident must stay put — escalating then
-        # would skip the diagnosis entirely.
+        # The verify timeout is wall-clock since the restart was issued, so it
+        # doesn't depend on how often — or from how many sources — the monitor
+        # ticks. Only escalates once we've actually attempted a restart; during
+        # detecting/diagnosing the incident must stay put or we'd skip the
+        # diagnosis entirely. See #67.
         if (
             self._view in ("fixing", "verifying")
             and self._escalate_on
-            and self._elapsed >= get_settings().docker_verify_timeout_seconds
+            and self._fixing_since
+            and (now - self._fixing_since).total_seconds() >= get_settings().docker_verify_timeout_seconds
         ):
             await self._finish("escalated", "Restart didn't bring it back in time — handed to you")
             return
@@ -647,6 +656,7 @@ class ServiceMonitor:
         self._proposed_fix = target.allowed_fix_action.get("container") if isinstance(target.allowed_fix_action, dict) else target.name
         self._proposed_fix_action = target.allowed_fix_action if isinstance(target.allowed_fix_action, dict) else {"action": "restart_container", "container": target.name}
         self._elapsed = 0  # fresh incident; the verify timer starts at the restart
+        self._fixing_since = None
         self._llm_action = None
         self._logs_arrived.clear()
         self._llm_ready.clear()
@@ -789,6 +799,7 @@ class ServiceMonitor:
             self._pending_agent_restarts[self._service_id] = action
             self._view = "fixing"
             self._elapsed = 0
+            self._fixing_since = datetime.utcnow()
         elif self._method == "url":
             await self._finish("escalated", "I can't restart a URL endpoint — handing to you")
         elif self._method == "fly":
@@ -805,6 +816,7 @@ class ServiceMonitor:
                 return
             self._view = "fixing"
             self._elapsed = 0
+            self._fixing_since = datetime.utcnow()
         else:
             token = executor_client.sign_action("restart_container", self._container)
             ok, err = await executor_client.send_action(self._executor_url(), token)
@@ -814,6 +826,7 @@ class ServiceMonitor:
                 return
             self._view = "fixing"
             self._elapsed = 0
+            self._fixing_since = datetime.utcnow()
 
     # ---- human actions (called by routers/incidents.py) -------------------
 
@@ -918,6 +931,7 @@ class ServiceMonitor:
     def _reset_to_resting(self):
         self._view = "resting"
         self._incident_id = None
+        self._fixing_since = None
         self._service_id = None
         self._service_name = None
         self._container = None
