@@ -1217,12 +1217,17 @@ class ServiceMonitor:
             return []
         name = self._container
         detected = {"kind": "done", "text": f"Detected — {name} is {self._severity}", "time": "now"}
+        # Name the platform and the verb honestly — a Fly machine isn't "docker".
+        platform = "fly" if self._method == "fly" else "docker"
+        verb = {"stop_container": "stop", "start_container": "start"}.get(
+            (self._proposed_fix_action or {}).get("action"), "restart"
+        )
 
         if self._view == "asking":
             return [
                 detected,
-                {"kind": "wait", "text": "Waiting for you — approve a docker restart", "time": "paused"},
-                {"kind": "pending", "text": f"Restart {name}", "time": ""},
+                {"kind": "wait", "text": f"Waiting for you — approve a {platform} {verb}", "time": "paused"},
+                {"kind": "pending", "text": f"{verb.capitalize()} {name}", "time": ""},
                 {"kind": "pending", "text": "Verify it comes back healthy", "time": ""},
             ]
         if self._view == "takeover":
@@ -1237,8 +1242,8 @@ class ServiceMonitor:
             detected,
             {
                 "kind": "done",
-                "text": f"Restarting {name}",
-                "time": "docker restart",
+                "text": f"Running {platform} {verb} on {name}",
+                "time": f"{platform} {verb}",
             },
             {
                 "kind": "done" if resolved else "active",
