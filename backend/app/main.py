@@ -1,3 +1,5 @@
+import logging
+import sys
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -36,8 +38,26 @@ from app.seed import ensure_seed_data
 DEFAULT_AUTH_SECRET = "dev-insecure-change-me"
 
 
+def _configure_logging() -> None:
+    """Send the app's own `oncall.*` logs (and the #54 wide events) to stdout at
+    INFO. uvicorn configures only its own loggers and leaves the root logger
+    without an INFO handler, so without this every oncall INFO line — including
+    every wide event — is silently dropped in production. Scoped to `oncall` so
+    uvicorn's access logs are untouched; propagate=False avoids double-logging.
+    """
+    oncall = logging.getLogger("oncall")
+    if oncall.handlers:
+        return
+    handler = logging.StreamHandler(sys.stdout)
+    handler.setFormatter(logging.Formatter("%(asctime)s %(name)s %(levelname)s %(message)s"))
+    oncall.addHandler(handler)
+    oncall.setLevel(logging.INFO)
+    oncall.propagate = False
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    _configure_logging()
     # Fail closed: the session JWT is signed with AUTH_SECRET. If it is still the
     # built-in default, anyone could forge an owner session. Refuse to serve.
     if get_settings().auth_secret == DEFAULT_AUTH_SECRET:
