@@ -37,9 +37,11 @@ def _platform_guidance(method: str) -> str:
         )
     if method == "fly":
         return (
-            "This service is a Fly.io Machine. Komodo watches it but in this version "
-            "CANNOT restart or change it; it can only alert a human. Your FIX must be "
-            "something a person should check or do, not a command Komodo can run."
+            "This service is a Fly.io Machine. Komodo can run exactly one of, through the "
+            "Machines API: a `restart` (bounce it — the usual fix), a `stop` (halt one that "
+            "is crash-looping or thrashing), or a `start` (bring up one that was stopped). If "
+            "none of these will help, say a human is needed and what to check. Do NOT suggest "
+            "flyctl, SSH, cloud consoles, or any tool Komodo does not have."
         )
     return (
         "This service runs as a Docker container. Komodo can run exactly one of: "

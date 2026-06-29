@@ -12,6 +12,9 @@ logger = logging.getLogger("oncall.fly")
 
 API_BASE = "https://api.machines.dev/v1"
 
+# Komodo action name -> Machines API operation.
+OPS = {"restart_container": "restart", "stop_container": "stop", "start_container": "start"}
+
 
 async def list_machines(app: str, token: str) -> list[dict] | None:
     """Machines for a Fly app. None if the call failed (bad token, missing app)."""
@@ -26,6 +29,21 @@ async def list_machines(app: str, token: str) -> list[dict] | None:
     except Exception as exc:
         logger.warning("fly list machines for %s failed: %s", app, exc)
         return None
+
+
+async def machine_action(app: str, machine_id: str, op: str, token: str) -> bool:
+    """Run a Machines API op (restart/stop/start) on a machine. True on success."""
+    import httpx
+
+    url = f"{API_BASE}/apps/{app}/machines/{machine_id}/{op}"
+    try:
+        async with httpx.AsyncClient(timeout=30) as client:
+            resp = await client.post(url, headers={"Authorization": f"Bearer {token}"})
+            resp.raise_for_status()
+            return True
+    except Exception as exc:
+        logger.warning("fly %s machine %s failed: %s", op, machine_id, exc)
+        return False
 
 
 def machine_status(state: str | None) -> str:
@@ -48,4 +66,7 @@ if __name__ == "__main__":
     assert machine_status("failed") == "down"
     assert machine_status("starting") == "degraded"
     assert machine_status(None) == "degraded"
+    assert OPS["restart_container"] == "restart"
+    assert OPS["stop_container"] == "stop"
+    assert OPS["start_container"] == "start"
     print("fly self-check ok")
