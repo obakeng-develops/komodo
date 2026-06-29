@@ -23,6 +23,8 @@ export interface UserSettings {
   llm_provider: string;
   llm_model: string;
   llm_api_key: string | null;
+  fly_api_token: string | null;
+  fly_apps: string[];
 }
 
 export interface Service {
