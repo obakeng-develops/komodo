@@ -123,6 +123,10 @@ class ServiceMonitor:
         self._llm_suggested_fix: str | None = None
         self._llm_confidence: str | None = None
         self._llm_action: str | None = None  # restart_container | none (model's pick)
+        # True once the one-shot diagnosis attempt finished with nothing usable
+        # (LLM unreachable/timed out/empty), so the card can say "unavailable"
+        # instead of hanging on "pending" forever. See #73.
+        self._diagnosis_unavailable: bool = False
         self._logs_arrived: asyncio.Event = asyncio.Event()
         self._llm_ready: asyncio.Event = asyncio.Event()
         self._awaiting_logs_task: asyncio.Task | None = None
@@ -559,6 +563,8 @@ class ServiceMonitor:
                     db.commit()
                 async with self._lock:
                     if self._incident_id == incident_id:
+                        if not result:
+                            self._diagnosis_unavailable = True
                         if result:
                             self._llm_diagnosis = result["diagnosis"]
                             self._llm_suggested_fix = result["suggested_fix"]
@@ -667,6 +673,7 @@ class ServiceMonitor:
         self._elapsed = 0  # fresh incident; the verify timer starts at the restart
         self._fixing_since = None
         self._llm_action = None
+        self._diagnosis_unavailable = False
         self._logs_arrived.clear()
         self._llm_ready.clear()
 
@@ -951,6 +958,7 @@ class ServiceMonitor:
         self._llm_suggested_fix = None
         self._llm_confidence = None
         self._llm_action = None
+        self._diagnosis_unavailable = False
         self._elapsed = 0
         if self._awaiting_logs_task and not self._awaiting_logs_task.done():
             self._awaiting_logs_task.cancel()
@@ -984,6 +992,7 @@ class ServiceMonitor:
         self._llm_suggested_fix = None
         self._llm_confidence = None
         self._llm_action = None
+        self._diagnosis_unavailable = False
         if self._awaiting_logs_task and not self._awaiting_logs_task.done():
             self._awaiting_logs_task.cancel()
         self._awaiting_logs_task = None
@@ -1212,6 +1221,7 @@ class ServiceMonitor:
             llm_diagnosis=self._llm_diagnosis,
             llm_suggested_fix=self._llm_suggested_fix,
             llm_confidence=self._llm_confidence,
+            diagnosis_unavailable=self._diagnosis_unavailable,
         )
 
     def _status_text(self) -> str:
