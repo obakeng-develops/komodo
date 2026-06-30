@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Komodo agent — runs on a user's server and reports container status.
+"""Mino agent — runs on a user's server and reports container status.
 
-Stdlib only. Talks to the Komodo backend via the /api/v1/agent/beat endpoint.
+Stdlib only. Talks to the Mino backend via the /api/v1/agent/beat endpoint.
 """
 
 import argparse
@@ -19,9 +19,9 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s %(levelname)s %(message)s",
 )
-logger = logging.getLogger("komodo-agent")
+logger = logging.getLogger("mino-agent")
 
-# Bumped whenever the agent script changes. Reported on every beat so Komodo can
+# Bumped whenever the agent script changes. Reported on every beat so Mino can
 # flag hosts running an out-of-date agent. The server compares it against the
 # version of the script it currently serves.
 AGENT_VERSION = "2026-06-29"
@@ -72,7 +72,7 @@ def run_docker_ps():
     return containers
 
 
-# The docker subcommand Komodo may run for each whitelisted action.
+# The docker subcommand Mino may run for each whitelisted action.
 _ACTION_CMD = {
     "restart_container": "restart",
     "stop_container": "stop",
@@ -189,14 +189,14 @@ def send_logs(server, token, lines):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Komodo agent")
-    parser.add_argument("--server", required=True, help="Komodo backend URL")
+    parser = argparse.ArgumentParser(description="Mino agent")
+    parser.add_argument("--server", required=True, help="Mino backend URL")
     parser.add_argument("--token", required=True, help="Agent token")
     parser.add_argument("--interval", type=int, default=10, help="Heartbeat interval in seconds")
     parser.add_argument("--once", action="store_true", help="Send one beat and exit")
     args = parser.parse_args()
 
-    logger.info("komodo agent starting: server=%s interval=%ss", args.server, args.interval)
+    logger.info("mino agent starting: server=%s interval=%ss", args.server, args.interval)
 
     pending_logs: set[str] = set()
     tail_proc = None

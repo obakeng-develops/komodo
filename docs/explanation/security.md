@@ -1,6 +1,6 @@
 # Security
 
-Komodo can restart your containers, so it is worth understanding what holds that power and how it is
+Mino can restart your containers, so it is worth understanding what holds that power and how it is
 contained.
 
 ## The executor is the sharp edge
@@ -27,6 +27,6 @@ the first-run owner page cannot be claimed by whoever finds the URL first.
 
 ## What is not here yet
 
-Komodo has no rate limiting on login, no server-side session revocation, and no in-app password
+Mino has no rate limiting on login, no server-side session revocation, and no in-app password
 change. These are reasonable next steps before exposing it widely. They are listed as future work
 rather than promised.

@@ -1,4 +1,4 @@
-# Single-origin reverse proxy for Komodo. The `web` service serves the SPA and
+# Single-origin reverse proxy for Mino. The `web` service serves the SPA and
 # /api together, so Caddy only terminates TLS and forwards everything to it.
 # APP_ORIGIN=http://localhost   -> plain HTTP (the http:// scheme disables auto-TLS)
 # APP_ORIGIN=komodo.example.com -> bare host: Caddy auto-provisions HTTPS via Let's Encrypt

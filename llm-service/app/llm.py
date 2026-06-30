@@ -24,34 +24,34 @@ def _headers(api_key: str) -> dict:
 
 
 # Per-platform remediation context. A service's `method` is its executor type:
-# `agent`/`docker` run as Docker containers Komodo can restart; `url` is an
+# `agent`/`docker` run as Docker containers Mino can restart; `url` is an
 # endpoint it can only alert on. Add a case here when an executor for a new
-# platform (e.g. kubernetes) actually exists, so the model is told what Komodo
+# platform (e.g. kubernetes) actually exists, so the model is told what Mino
 # can and cannot do for that kind of service.
 def _platform_guidance(method: str) -> str:
     if method == "url":
         return (
-            "This service is an HTTP endpoint. Komodo monitors it but CANNOT restart "
+            "This service is an HTTP endpoint. Mino monitors it but CANNOT restart "
             "or change it; it can only alert a human. Your FIX must be something a "
-            "person should check or do, not a command Komodo can run."
+            "person should check or do, not a command Mino can run."
         )
     if method == "fly":
         return (
-            "This service is a Fly.io Machine. Komodo can run exactly one of, through the "
+            "This service is a Fly.io Machine. Mino can run exactly one of, through the "
             "Machines API: a `restart` (bounce it — the usual fix), a `stop` (halt one that "
             "is crash-looping or thrashing), or a `start` (bring up one that was stopped). If "
             "none of these will help, say a human is needed and what to check. Do NOT suggest "
-            "flyctl, SSH, cloud consoles, or any tool Komodo does not have."
+            "flyctl, SSH, cloud consoles, or any tool Mino does not have."
         )
     return (
-        "This service runs as a Docker container. Komodo can run exactly one of: "
+        "This service runs as a Docker container. Mino can run exactly one of: "
         "`docker restart` (bounce it — the usual fix), `docker stop` (stop a container "
         "that is crash-looping or thrashing the host, to stop the bleeding), or "
         "`docker start` (start one that was cleanly stopped). If none of these will help, "
         "say a human is needed and what to check. If the container was OOM-killed or exited "
         "137, a restart will NOT durably fix it — it will hit the same limit again; choose "
         "ACTION none and tell the person to raise the memory limit or fix the leak. Do NOT "
-        "suggest kubectl, systemd, cloud consoles, or any tool Komodo does not have."
+        "suggest kubectl, systemd, cloud consoles, or any tool Mino does not have."
     )
 
 
@@ -61,9 +61,9 @@ def _system_prompt(method: str) -> str:
         + _platform_guidance(method)
         + " Be concise. Respond with exactly four lines in this format:\n"
         "CAUSE: one-sentence likely root cause\n"
-        "FIX: one concrete action within Komodo's abilities described above\n"
+        "FIX: one concrete action within Mino's abilities described above\n"
         "ACTION: one of restart_container, stop_container, start_container, or none "
-        "(none if no Komodo action will help)\n"
+        "(none if no Mino action will help)\n"
         "CONFIDENCE: low | medium | high\n"
         "Do not add extra commentary."
     )

@@ -1,6 +1,6 @@
 # Deploy with Docker Compose
 
-This is the supported way to run Komodo on a server. Caddy takes the only public port. It serves
+This is the supported way to run Mino on a server. Caddy takes the only public port. It serves
 the frontend and forwards `/api` to the backend, so everything lives on one origin. That is what
 makes the session cookie and the live stream work. See [Why one origin](../explanation/one-origin.md)
 for the reasoning.
@@ -26,7 +26,7 @@ docker compose up -d --build
 
 ## 3. Create the owner
 
-Open your `APP_ORIGIN`. Create the owner account on the first-run screen. Komodo then closes the
+Open your `APP_ORIGIN`. Create the owner account on the first-run screen. Mino then closes the
 setup endpoint for good. Add your LLM key in **Settings**, not the environment; see
 [Choose an LLM provider](choose-an-llm-provider.md).
 
@@ -70,9 +70,9 @@ AUTH_SECRET=…
 docker compose up -d --build      # serves https://komodo.example.com
 ```
 
-On the first visit, Komodo asks for the setup token before it lets you create the owner.
+On the first visit, Mino asks for the setup token before it lets you create the owner.
 
 ## Next
 
-- [Install the agent on a host](install-the-agent.md) so Komodo has something to watch.
+- [Install the agent on a host](install-the-agent.md) so Mino has something to watch.
 - [Manage your team](manage-your-team.md) to add your backup on-call.
