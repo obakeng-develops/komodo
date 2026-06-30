@@ -1,8 +1,8 @@
 # fly.io config for the Mino llm-service. Private only: a service with no public
-# ports, reached over flycast (a private IPv6) at komodo-llm.flycast:8001. fly-proxy
+# ports, reached over flycast (a private IPv6) at mino-llm.flycast:8001. fly-proxy
 # forwards to the app on 0.0.0.0:8001, so no IPv6 binding is needed in the image.
-# At deploy time: fly ips allocate-v6 --private --app komodo-llm
-app = "komodo-llm"
+# At deploy time: fly ips allocate-v6 --private --app mino-llm
+app = "mino-llm"
 primary_region = "jnb"
 
 [build]
@@ -19,7 +19,7 @@ primary_region = "jnb"
 
   # Expose port 8001 over the (private) flycast IP. Without this, fly-proxy has no
   # port handler — flycast accepts the connection then resets it (httpx ReadError),
-  # so the backend's call to komodo-llm.flycast:8001 never reaches the app and the
+  # so the backend's call to mino-llm.flycast:8001 never reaches the app and the
   # diagnosis silently fails. Raw TCP passthrough; the app speaks HTTP on 8001. #66
   [[services.ports]]
     port = 8001
