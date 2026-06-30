@@ -53,7 +53,7 @@ hosts that allow it. A new type needs its own action and an executor that carrie
 
 Remediation only runs if it passes the action whitelist (`backend/app/actions.py`,
 `is_allowed_action`). Add the new action there, and nowhere else, so the safety boundary stays in one
-place. See [How Mino works](../explanation/how-komodo-works.md#guardrails) for why the whitelist
+place. See [How Mino works](../explanation/how-mino-works.md#guardrails) for why the whitelist
 exists.
 
 ## The short version

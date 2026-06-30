@@ -15,7 +15,7 @@ it doesn't matter where you host it (a VPS, Docker Compose, Fly, Kamal, your own
 - **Run exactly one instance — don't scale it out.** Mino is a single process and must not run
   as multiple replicas or autoscale. Its monitor (the poll loop and the live incident state) is a
   per-process singleton; a second replica would open duplicate incidents and, in auto-fix, restart
-  the same container twice (see [#64](https://github.com/obakeng-develops/komodo/issues/64)).
+  the same container twice (see [#64](https://github.com/obakeng-develops/mino/issues/64)).
   Concretely: don't put it behind a load balancer with more than one replica, and keep the one
   instance always on (don't scale to zero — the monitor must run continuously). Platform examples:
   Docker Compose — a single `web` container, no `--scale web=2`; Fly — `min_machines_running = 1`
@@ -58,7 +58,7 @@ The docs follow [Diátaxis](https://diataxis.fr/). Pick the door that matches wh
 - [Events](docs/reference/events.md)
 
 **Understanding.** You want to know why.
-- [How Mino works](docs/explanation/how-komodo-works.md)
+- [How Mino works](docs/explanation/how-mino-works.md)
 - [Why one origin](docs/explanation/one-origin.md)
 - [Security](docs/explanation/security.md)
 
