@@ -493,6 +493,8 @@ class ServiceMonitor:
                     if loop is not None:
                         loop.call_soon_threadsafe(self._logs_arrived.set)
                         # ponytail: one-shot LLM diagnosis after the first useful log snapshot.
+                        # Revisit (retry / multi-pass over later snapshots) if one-shot diagnoses
+                        # prove too shallow or miss when the first snapshot is sparse.
                         if not incident.llm_diagnosed_at and settings:
                             asyncio.run_coroutine_threadsafe(
                                 self._request_llm_diagnosis(
