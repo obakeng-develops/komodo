@@ -7,6 +7,7 @@
 	import { isOwner } from '$lib/auth';
 	import { cardReceive, cardSend, contentFly } from '$lib/animation';
 	import AutonomyToggle from '$lib/components/AutonomyToggle.svelte';
+	import OnboardingChecklist from '$lib/components/OnboardingChecklist.svelte';
 	import Timeline from '$lib/components/Timeline.svelte';
 	import Button from '$lib/components/ui/Button.svelte';
 	import Badge from '$lib/components/ui/Badge.svelte';
@@ -177,6 +178,11 @@
 					aria-live="polite"
 				>
 					{#if !$activeIncident || $activeIncident.view === 'resting'}
+						{#if $isOwner && services.length === 0}
+							<div class="p-6 sm:p-10" in:contentFly|local>
+								<OnboardingChecklist {settings} />
+							</div>
+						{:else}
 						<div class="p-6 sm:p-10" in:contentFly|local>
 							<div class="inline-flex items-center gap-2 font-mono text-xs text-surface-500 tracking-wide">
 										<span class="w-2 h-2 rounded-full {dotClasses()}"></span>
@@ -217,6 +223,7 @@
 								</div>
 							{/if}
 						</div>
+						{/if}
 					{:else if $activeIncident.view === 'asking'}
 						<div class="p-5 sm:p-9" in:contentFly|local>
 							<div class="flex justify-between items-start gap-4">
