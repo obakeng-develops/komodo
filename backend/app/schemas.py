@@ -89,6 +89,7 @@ class ServiceOut(BaseModel):
     host_name: str | None = None
     name: str
     method: str
+    fly_app: str | None = None  # the Fly app a "fly" service's machine belongs to
     health_check_url: str | None = None
     agent_token: str | None = None
     agent_host_info: dict[str, Any] | None = None

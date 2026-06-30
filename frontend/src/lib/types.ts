@@ -33,7 +33,8 @@ export interface Service {
   host_id: string | null;
   host_name: string | null;
   name: string;
-  method: 'docker' | 'agent' | 'url';
+  method: 'docker' | 'agent' | 'url' | 'fly';
+  fly_app: string | null;
   health_check_url: string | null;
   agent_token: string | null;
   agent_host_info: Record<string, any> | null;
