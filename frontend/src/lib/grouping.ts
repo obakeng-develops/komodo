@@ -9,11 +9,19 @@ export interface ServerGroup {
 
 const HOSTLESS = 'URL checks';
 
-// Group services by the server (host) they run on, unhealthiest server first.
+// The "server" a service is grouped under: the agent host for agent/docker
+// checks, the Fly app for fly machines (their natural grouping), and the
+// shared "URL checks" bucket for hostless url checks. See #78.
+function serverKey(s: Service): string {
+	if (s.method === 'fly') return s.fly_app ?? 'Fly';
+	return s.host_name ?? HOSTLESS;
+}
+
+// Group services by the server they run on, unhealthiest server first.
 export function groupByServer(services: Service[]): ServerGroup[] {
 	const byName = new Map<string, Service[]>();
 	for (const s of services) {
-		const key = s.host_name ?? HOSTLESS;
+		const key = serverKey(s);
 		const list = byName.get(key) ?? [];
 		list.push(s);
 		byName.set(key, list);
