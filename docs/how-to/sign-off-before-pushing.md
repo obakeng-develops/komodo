@@ -1,6 +1,6 @@
 # Sign off before pushing
 
-Komodo ships two scripts that run the same quality gates:
+Mino ships two scripts that run the same quality gates:
 
 - `scripts/checks` runs the gates and stops at the first failure.
 - `scripts/signoff` runs the gates on a clean repo, then records a `signoff` status on the commit

@@ -5,9 +5,9 @@ needs Python 3 and access to the Docker socket.
 
 ## Steps
 
-1. In Komodo, open **Settings**, then **Connected servers**, then **Add server**. Only owners can do
+1. In Mino, open **Settings**, then **Connected servers**, then **Add server**. Only owners can do
    this. Name the server.
-2. Click **Install**. Komodo shows a command with a one-time token in it. Copy it.
+2. Click **Install**. Mino shows a command with a one-time token in it. Copy it.
 3. Run it on the host:
 
 ```bash
@@ -15,7 +15,7 @@ curl -fsSL https://komodo.example.com/api/v1/agent/script \
   | python3 - --server https://komodo.example.com --token <agent-token>
 ```
 
-The agent reports `docker ps` every few seconds and runs `docker restart` only when Komodo approves
+The agent reports `docker ps` every few seconds and runs `docker restart` only when Mino approves
 it. Nothing else.
 
 ## Keep it running
@@ -23,13 +23,13 @@ it. Nothing else.
 Wrap the command in a systemd unit so it survives reboots:
 
 ```ini
-# /etc/systemd/system/komodo-agent.service
+# /etc/systemd/system/mino-agent.service
 [Unit]
-Description=Komodo agent
+Description=Mino agent
 After=docker.service
 
 [Service]
-ExecStart=/usr/bin/python3 /opt/komodo/komodo-agent.py \
+ExecStart=/usr/bin/python3 /opt/komodo/mino-agent.py \
   --server https://komodo.example.com --token <agent-token>
 Restart=always
 
@@ -37,14 +37,14 @@ Restart=always
 WantedBy=multi-user.target
 ```
 
-Save the script to `/opt/komodo/komodo-agent.py` first (download it from the same `/api/v1/agent/script`
-URL), then `systemctl enable --now komodo-agent`.
+Save the script to `/opt/komodo/mino-agent.py` first (download it from the same `/api/v1/agent/script`
+URL), then `systemctl enable --now mino-agent`.
 
 ## Agent flags
 
 | Flag | Default | Meaning |
 |---|---|---|
-| `--server` | required | the Komodo URL the agent reports to |
+| `--server` | required | the Mino URL the agent reports to |
 | `--token` | required | the host token from the Add server screen |
 | `--interval` | 10 | seconds between heartbeats |
 | `--once` | off | send one heartbeat and exit |

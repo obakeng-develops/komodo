@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Local sign-off for Komodo: run every quality gate, then stamp the commit on
+# Local sign-off for Mino: run every quality gate, then stamp the commit on
 # GitHub. Adapted from DHH's signoff — https://gist.github.com/dhh/c5051aae633ff91bc4ce30528e4f0b60
 
 # Abort sign off on any error

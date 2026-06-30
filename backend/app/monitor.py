@@ -680,7 +680,7 @@ class ServiceMonitor:
         stream_manager.broadcast("incident_created", {"incident_id": self._incident_id})
 
         if self._method == "url":
-            # Komodo can't act on a URL endpoint. There are no logs to fetch, so
+            # Mino can't act on a URL endpoint. There are no logs to fetch, so
             # diagnose from status and hand it to a human — never offer a fix we
             # can't perform. See issues #33, #35.
             self._proposed_fix = None

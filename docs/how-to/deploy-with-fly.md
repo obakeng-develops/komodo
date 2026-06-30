@@ -1,8 +1,8 @@
 # Deploy with fly.io
 
-This runs Komodo as one fly.io app: the combined image, where the backend serves the SPA and the
+This runs Mino as one fly.io app: the combined image, where the backend serves the SPA and the
 API on a single origin. It pairs well with watching a fleet that lives elsewhere (a separate
-server), since you keep Komodo off that box.
+server), since you keep Mino off that box.
 
 You need `flyctl` logged in (`fly auth login`) and the root `Dockerfile` from the combined-image
 change. The executor does not run on fly (a fly microVM has no host Docker socket); you watch a host
@@ -30,7 +30,7 @@ fly secrets set --app komodo \
   SETUP_TOKEN=...
 ```
 
-Leave `LLM_SERVICE_URL` unset to start. Komodo skips LLM diagnosis gracefully when it is missing;
+Leave `LLM_SERVICE_URL` unset to start. Mino skips LLM diagnosis gracefully when it is missing;
 monitoring and restarts still work. Add the llm-service later (below).
 
 ## 3. Deploy

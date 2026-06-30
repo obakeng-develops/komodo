@@ -1,6 +1,6 @@
 # Deploy with Kamal
 
-Kamal expects one web image plus a few prebuilt accessories. Komodo is several services, so the
+Kamal expects one web image plus a few prebuilt accessories. Mino is several services, so the
 clean fit is to fold them: the backend serves the built frontend as Kamal's one web app,
 `kamal-proxy` handles TLS, and Postgres, the llm-service, and the executor run as accessories.
 

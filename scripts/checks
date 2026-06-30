@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Run Komodo's quality gates. Exits non-zero the moment one fails.
+# Run Mino's quality gates. Exits non-zero the moment one fails.
 # Used by scripts/signoff and the pre-push hook.
 set -e
 SECONDS=0

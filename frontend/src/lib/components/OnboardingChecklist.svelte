@@ -8,7 +8,7 @@
 	import SegmentedControl from '$lib/components/ui/SegmentedControl.svelte';
 
 	// Shown on the Now page only while the owner has no services yet (#82). Two
-	// paths: watch a server via the agent (Komodo's main job), or a quick URL
+	// paths: watch a server via the agent (Mino's main job), or a quick URL
 	// check. Adding a URL pushes it into servicesStore so the parent swaps this
 	// card out; the server path clears once the agent connects and reports a
 	// service (servicesStore is kept fresh by the layout).
@@ -20,7 +20,7 @@
 
 	// Server / agent path
 	let hostName = '';
-	let komodoUrl = serverUrl;
+	let minoUrl = serverUrl;
 	let creatingHost = false;
 	let createdHost: (Host & { token: string }) | null = null;
 	let hostError: string | null = null;
@@ -28,7 +28,7 @@
 
 	$: installCommand = createdHost
 		? (() => {
-				const base = komodoUrl.replace(/\/$/, '');
+				const base = minoUrl.replace(/\/$/, '');
 				return `curl -fsSL ${base}${api.hosts.scriptUrl()} | python3 - --server ${base} --token ${createdHost.token}`;
 			})()
 		: '';
@@ -124,9 +124,9 @@
 					<input type="text" placeholder="e.g. prod-web-01" bind:value={hostName} class="{inputClass} font-sans" />
 				</label>
 				<label class="flex flex-col gap-1">
-					<span class="font-sans text-micro text-surface-500">Komodo URL</span>
-					<input type="url" placeholder={serverUrl} bind:value={komodoUrl} class="{inputClass} font-mono" />
-					<span class="font-sans text-micro text-surface-400">The agent on the server reports back here — usually this Komodo instance.</span>
+					<span class="font-sans text-micro text-surface-500">Mino URL</span>
+					<input type="url" placeholder={serverUrl} bind:value={minoUrl} class="{inputClass} font-mono" />
+					<span class="font-sans text-micro text-surface-400">The agent on the server reports back here — usually this Mino instance.</span>
 				</label>
 				<div>
 					<Button type="submit" size="lg" disabled={!hostName.trim() || creatingHost}>
