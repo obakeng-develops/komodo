@@ -163,8 +163,10 @@
 				{/each}
 			</div>
 		{:else if fleet && fleet.servers.length === 0}
-			<div class="mt-8 font-sans text-sm text-surface-500">
-				No servers yet. Add one in <a class="underline" href="/settings">Settings</a> and run the agent.
+			<div class="mt-8 bg-white border border-surface-300 rounded-card p-6 shadow-card text-center">
+				<div class="font-serif text-heading text-surface-900">No servers yet</div>
+				<div class="mt-1.5 font-sans text-sm text-surface-500">Add a server and install the agent, or add a URL check to watch.</div>
+				<a href="/settings" class="inline-block mt-4 px-4 py-2 rounded-lg bg-surface-900 text-white font-sans font-medium text-label no-underline hover:bg-surface-800">Add a service</a>
 			</div>
 		{:else if fleet}
 			<div class="mt-7 flex flex-col gap-5">
