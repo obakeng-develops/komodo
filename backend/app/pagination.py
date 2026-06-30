@@ -3,8 +3,8 @@ import json
 from datetime import date, datetime
 from typing import TypeVar
 
-from sqlalchemy import asc, desc
-from sqlalchemy.orm import Query, Session
+from sqlalchemy import desc
+from sqlalchemy.orm import Query
 
 T = TypeVar("T")
 
@@ -25,19 +25,13 @@ def cursor_decode(cursor: str) -> dict:
 
 
 def paginate(
-    db: Session,
     query: Query,
     *,
     cursor: str | None,
     limit: int,
     sort_column,
-    sort_asc: bool = False,
 ) -> tuple[list[T], str | None, bool]:
-    column = sort_column
-    if sort_asc:
-        query = query.order_by(asc(column))
-    else:
-        query = query.order_by(desc(column))
+    query = query.order_by(desc(sort_column))
 
     if cursor:
         decoded = cursor_decode(cursor)
@@ -47,10 +41,7 @@ def paginate(
             # against the column's real type (encode side serializes via isoformat).
             if isinstance(value, str) and sort_column.type.python_type in (datetime, date):
                 value = datetime.fromisoformat(value)
-            if sort_asc:
-                query = query.filter(column > value)
-            else:
-                query = query.filter(column < value)
+            query = query.filter(sort_column < value)
 
     items = query.limit(limit + 1).all()
     has_more = len(items) > limit
