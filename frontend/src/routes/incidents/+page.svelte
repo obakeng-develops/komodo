@@ -6,6 +6,7 @@
 	import { activeIncident, lastIncidentCreated } from '$lib/stream';
 	import IncidentCard from '$lib/components/IncidentCard.svelte';
 	import Button from '$lib/components/ui/Button.svelte';
+	import { groupByService } from '$lib/grouping';
 	import type { Incident, PaginatedIncidents } from '$lib/types';
 
 	let incidents: Incident[] = [];
@@ -58,6 +59,7 @@
 	}
 
 	$: hasActive = $activeIncident && ['detecting', 'diagnosing', 'fixing', 'verifying', 'asking', 'takeover'].includes($activeIncident.view);
+	$: groups = groupByService(incidents);
 	$: resolvedN = incidents.filter((i) => i.status === 'resolved').length;
 	$: tookN = incidents.filter((i) => i.status === 'escalated' || i.status === 'took_over').length;
 </script>
@@ -82,13 +84,24 @@
 			</div>
 		{/if}
 
-		<div class="mt-6 bg-white border border-surface-300 rounded-2xl shadow-card overflow-hidden">
-			{#each incidents as incident (incident.id)}
-				<IncidentCard {incident} open={openId === incident.id} on:toggle={() => toggleOpen(incident)} />
+		{#if incidents.length === 0 && !loading}
+			<div class="mt-6 bg-white border border-surface-300 rounded-2xl shadow-card px-5 py-8 text-center font-sans text-sm text-surface-500">
+				No incidents yet.
+			</div>
+		{/if}
+
+		<div class="mt-6 flex flex-col gap-5">
+			{#each groups as group (group.service_id)}
+				<div class="bg-white border border-surface-300 rounded-2xl shadow-card overflow-hidden">
+					<div class="px-5 pt-4 pb-3 flex items-baseline justify-between gap-3">
+						<span class="font-mono text-label text-surface-900 tracking-wide uppercase truncate">{group.name}</span>
+						<span class="font-mono text-micro text-surface-500 flex-shrink-0">{group.incidents.length} incident{group.incidents.length === 1 ? '' : 's'}</span>
+					</div>
+					{#each group.incidents as incident (incident.id)}
+						<IncidentCard {incident} showService={false} open={openId === incident.id} on:toggle={() => toggleOpen(incident)} />
+					{/each}
+				</div>
 			{/each}
-			{#if incidents.length === 0 && !loading}
-				<div class="px-5 py-8 text-center font-sans text-sm text-surface-500">No incidents yet.</div>
-			{/if}
 		</div>
 
 		{#if hasMore}

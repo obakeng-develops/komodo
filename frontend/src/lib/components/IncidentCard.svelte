@@ -5,6 +5,9 @@
 
 	export let incident: Incident;
 	export let open: boolean = false;
+	// Hidden when the card sits under a per-machine group header that already
+	// names the service, to avoid repeating it on every row. See #76.
+	export let showService: boolean = true;
 
 	// List endpoint omits events; fetch them on first expand.
 	let events: IncidentEvent[] | null = incident.events ?? null;
@@ -81,11 +84,13 @@
 	>
 		<span class={badgeClass()}>{incident.severity === 'down' ? '● down' : '◐ degraded'}</span>
 		<span class="flex-1 min-w-0">
-			<span class="flex items-center mb-1.5">
-				<span class="inline-flex items-center px-2 py-0.5 rounded-md bg-surface-200 border border-surface-300 font-medium text-micro font-mono text-surface-700">
-					{incident.service_name || incident.service_id}
+			{#if showService}
+				<span class="flex items-center mb-1.5">
+					<span class="inline-flex items-center px-2 py-0.5 rounded-md bg-surface-200 border border-surface-300 font-medium text-micro font-mono text-surface-700">
+						{incident.service_name || incident.service_id}
+					</span>
 				</span>
-			</span>
+			{/if}
 			<span class="block font-serif text-base leading-snug text-surface-900">{incident.summary}</span>
 			<span class="block mt-1 font-mono text-label text-surface-500">
 				{incident.started_at ? new Date(incident.started_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''} ·
