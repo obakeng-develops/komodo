@@ -47,16 +47,16 @@ Within a few seconds the agent reports your containers, and they appear in Mino.
 Start a throwaway container, then stop it and watch Mino notice.
 
 ```bash
-docker run -d --name komodo-demo nginx
+docker run -d --name mino-demo nginx
 ```
 
 Give the agent a moment to report it. Then stop it:
 
 ```bash
-docker stop komodo-demo
+docker stop mino-demo
 ```
 
-Switch to the **Now** view. Mino detects that `komodo-demo` is down, opens an incident, reads the
+Switch to the **Now** view. Mino detects that `mino-demo` is down, opens an incident, reads the
 logs, and asks the LLM what happened. If you set an autonomy of auto-fix, the agent restarts the
 container and the incident resolves on its own. If you left it on ask-first, Mino waits with a
 diagnosis and an **Approve** button. Click it and watch the container come back.
@@ -64,7 +64,7 @@ diagnosis and an **Approve** button. Click it and watch the container come back.
 ## 5. Clean up
 
 ```bash
-docker rm -f komodo-demo
+docker rm -f mino-demo
 ```
 
 ## What you learned
