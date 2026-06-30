@@ -1,8 +1,8 @@
 # fly.io config for the Mino web app: the combined image (backend + SPA) on
 # one origin. Depends on the root Dockerfile (PR "Serve the SPA from the backend").
-# `app` names are global; rename if "komodo" is taken (fly launch will prompt).
-app = "komodo"
-primary_region = "jnb"  # Johannesburg, closest to the caready host
+# `app` names are global; rename if "mino" is taken (fly launch will prompt).
+app = "mino"
+primary_region = "jnb"  # set to the region nearest the servers you watch
 
 [build]
   dockerfile = "Dockerfile"

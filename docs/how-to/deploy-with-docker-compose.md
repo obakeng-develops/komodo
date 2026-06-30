@@ -57,7 +57,7 @@ Point an A record at the host and open ports 80 and 443. Then:
 `.env`:
 
 ```dotenv
-APP_ORIGIN=komodo.example.com     # a bare host, so Caddy gets a Let's Encrypt cert on its own
+APP_ORIGIN=mino.example.com     # a bare host, so Caddy gets a Let's Encrypt cert on its own
 COOKIE_SECURE=true                # required over HTTPS
 SETUP_TOKEN=…                     # so only you can claim the owner account
 POSTGRES_PASSWORD=…
@@ -67,7 +67,7 @@ AUTH_SECRET=…
 ```
 
 ```bash
-docker compose up -d --build      # serves https://komodo.example.com
+docker compose up -d --build      # serves https://mino.example.com
 ```
 
 On the first visit, Mino asks for the setup token before it lets you create the owner.
