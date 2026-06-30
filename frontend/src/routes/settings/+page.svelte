@@ -504,7 +504,7 @@
 			<div class="mt-5 bg-white border border-surface-300 rounded-card p-5 shadow-card">
 				<div class="font-sans font-semibold text-label text-surface-700">Fly.io</div>
 				<div class="mt-1 font-sans text-xs leading-snug text-surface-500">
-					Watch services running as Fly Machines. Add a Fly API token and the apps to watch; Komodo lists each app's machines and flags any that go down. (Restarting them comes later — for now it alerts.)
+					Watch services running as Fly Machines. Add a Fly API token and the apps to watch; Mino lists each app's machines and flags any that go down. (Restarting them comes later — for now it alerts.)
 				</div>
 				{#if settings?.fly_api_token}
 					<div class="mt-3.5 flex items-center gap-3 bg-white border border-surface-300 rounded-xl px-4 py-3.5">
@@ -663,14 +663,14 @@
 					{/if}
 					<div class="flex flex-col gap-2">
 						<label class="flex flex-col gap-1">
-							<span class="font-sans text-micro text-surface-500">Komodo URL</span>
+							<span class="font-sans text-micro text-surface-500">Mino URL</span>
 							<input
 								type="url"
 								bind:value={newHostBackendUrl}
 								placeholder={serverUrl}
 								class="px-3 py-2 rounded-lg bg-white border border-surface-300 font-mono text-sm text-surface-900 focus:outline-none focus:border-surface-500"
 							/>
-							<span class="font-sans text-micro text-surface-400">Where the agent you install on the server reports back — usually this Komodo instance.</span>
+							<span class="font-sans text-micro text-surface-400">Where the agent you install on the server reports back — usually this Mino instance.</span>
 						</label>
 						<div class="flex gap-2 items-end">
 							<label class="flex flex-col gap-1 flex-1">

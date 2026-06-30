@@ -13,7 +13,7 @@ from app.llm import diagnose
 def _configure_logging() -> None:
     """Send the service's `llm.*` logs to stdout at INFO. uvicorn leaves the root
     logger without an INFO handler, so otherwise the diagnosis reasons (no key,
-    parse failure, upstream error) are silently dropped. See Komodo #61/#66."""
+    parse failure, upstream error) are silently dropped. See Mino #61/#66."""
     llm = logging.getLogger("llm")
     if llm.handlers:
         return
@@ -52,7 +52,7 @@ async def lifespan(app: FastAPI):
     yield
 
 
-app = FastAPI(title="Komodo LLM Service", version="1.0.0", lifespan=lifespan)
+app = FastAPI(title="Mino LLM Service", version="1.0.0", lifespan=lifespan)
 
 
 @app.post("/diagnose", response_model=DiagnoseResponse)

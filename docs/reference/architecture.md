@@ -3,8 +3,8 @@
 ## Services and ports
 
 ```
-   ┌── a host you monitor ────┐         ┌──────────────── Komodo server ─────────────────┐
-   │  komodo-agent.py         │  beats  │  backend (FastAPI)                              │
+   ┌── a host you monitor ────┐         ┌──────────────── Mino server ─────────────────┐
+   │  mino-agent.py         │  beats  │  backend (FastAPI)                              │
    │  reads docker ps         │ ──────► │  opens incidents, runs the state machine        │
    │  runs docker restart      │ ◄────── │  asks llm-service to diagnose                   │
    │  when told to            │ actions │  streams the live state to the UI over SSE      │

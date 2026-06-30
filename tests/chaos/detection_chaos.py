@@ -1,8 +1,8 @@
 """Chaos tests for detection + the incident loop (D1, L4, I2, plus a soft
-diagnosis check) against a LOCAL Komodo (docker compose) you've already brought
+diagnosis check) against a LOCAL Mino (docker compose) you've already brought
 up and logged into once.
 
-Runs a real agent against local Docker, reporting to the local Komodo, then:
+Runs a real agent against local Docker, reporting to the local Mino, then:
   D1  stop a container        -> reported `down` (not `degraded`/`unhealthy`)
   (*) diagnosis               -> incident gets an LLM cause (soft: needs a key)
   L4  start it again          -> incident resolves, monitoring resumes
@@ -79,7 +79,7 @@ def main():
     docker("run", "-d", "--name", TARGET, "nginx")
 
     agent = subprocess.Popen(
-        ["python3", str(ROOT / "agent" / "komodo-agent.py"),
+        ["python3", str(ROOT / "agent" / "mino-agent.py"),
          "--server", HOST, "--token", token, "--interval", "3"],
         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
     )

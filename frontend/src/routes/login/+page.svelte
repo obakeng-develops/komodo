@@ -61,8 +61,8 @@
 		class="w-full max-w-[340px] bg-white border border-surface-300 rounded-card p-7 flex flex-col gap-4 shadow-card"
 	>
 		<div class="flex items-center gap-[11px]">
-			<span class="w-8 h-8 rounded-full bg-surface-900 text-white inline-flex items-center justify-center font-serif text-heading">k</span>
-			<h1 class="font-sans font-semibold text-body text-surface-900">Komodo</h1>
+			<span class="w-8 h-8 rounded-full bg-surface-900 text-white inline-flex items-center justify-center font-serif text-heading">m</span>
+			<h1 class="font-sans font-semibold text-body text-surface-900">Mino</h1>
 		</div>
 		<div class="font-sans text-label text-surface-500 -mt-1">
 			{needsSetup ? 'Create the owner account for your fleet.' : 'Sign in to your fleet.'}

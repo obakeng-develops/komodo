@@ -1,6 +1,6 @@
 # Why one origin
 
-Komodo serves the whole app from a single origin. Caddy sits in front, hands browser requests for
+Mino serves the whole app from a single origin. Caddy sits in front, hands browser requests for
 the UI to the frontend, and forwards `/api` to the backend. To the browser it is all one site.
 
 This is a deliberate choice, and it pays off in three places.

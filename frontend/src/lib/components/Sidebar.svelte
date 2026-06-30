@@ -85,7 +85,7 @@
 	<div class="flex items-center gap-2.5 min-w-0">
 		<span
 			class="w-7 h-7 rounded-full bg-surface-900 text-white inline-flex items-center justify-center font-serif text-[15px] flex-shrink-0"
-			>k</span
+			>m</span
 		>
 		<span class="inline-flex items-center gap-1.5 font-mono text-[11px] text-surface-500 truncate">
 			<span class="w-1.5 h-1.5 rounded-full flex-shrink-0 {dotClasses(services)}"></span>
@@ -121,10 +121,10 @@
 	<div class="flex items-center gap-[11px] px-2">
 		<span
 			class="w-8 h-8 rounded-full bg-surface-900 text-white inline-flex items-center justify-center font-serif text-[17px]"
-			>k</span
+			>m</span
 		>
 		<div>
-			<div class="font-sans font-semibold text-[15px] text-surface-900 leading-tight">Komodo</div>
+			<div class="font-sans font-semibold text-[15px] text-surface-900 leading-tight">Mino</div>
 			<div class="mt-[3px] inline-flex items-center gap-1.5 font-mono text-[11px] text-surface-500">
 				<span class="w-1.5 h-1.5 rounded-full transition-all duration-300 {dotClasses(services)}"></span>
 				{$activeIncident?.status_text || summaryText(services)}

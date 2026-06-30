@@ -1,11 +1,11 @@
 # Chaos tests
 
-These tests break Komodo on purpose and check that it fails the way it should.
+These tests break Mino on purpose and check that it fails the way it should.
 They run against a real stack, not mocks: a real executor container, a real
 agent process, a real Docker daemon.
 
-They test what Komodo does today, not what it might do later. Scenarios that
-would assert features Komodo lacks (per-target allowlists, confidence gating)
+They test what Mino does today, not what it might do later. Scenarios that
+would assert features Mino lacks (per-target allowlists, confidence gating)
 are noted in the files and left out, so a pass means something.
 
 ## executor_chaos.py
@@ -45,6 +45,6 @@ drives it through the loop:
 
 ## Running
 
-Both need Docker. `detection_chaos.py` needs a local Komodo already up
+Both need Docker. `detection_chaos.py` needs a local Mino already up
 (`docker compose up`) with an owner you can log in as; set `KOMODO_EMAIL` and
 `KOMODO_PASSWORD` if they differ from the defaults at the top of the file.

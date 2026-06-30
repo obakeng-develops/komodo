@@ -8,7 +8,7 @@ gracefully.
 Run:  .venv/bin/python tests/chaos/executor_chaos.py
 Needs: docker, and the repo's ./executor image (built on demand).
 
-Out of scope here (Komodo doesn't implement these yet, so they'd assert fiction):
+Out of scope here (Mino doesn't implement these yet, so they'd assert fiction):
   E3 per-target allowlist  - the executor validates name *format*, not a list.
   E4 confidence gating      - the executor has no concept of confidence.
 """

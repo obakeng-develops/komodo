@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Prepare a LOCAL Komodo for a Locust run: create the owner (or log in) and a
+# Prepare a LOCAL Mino for a Locust run: create the owner (or log in) and a
 # host, then print the env to paste before running locust. Assumes a local
 # instance is already up (docker compose up) with an open first-run setup.
 set -euo pipefail

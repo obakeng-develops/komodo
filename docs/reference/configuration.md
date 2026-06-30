@@ -1,6 +1,6 @@
 # Configuration
 
-Every environment variable Komodo reads, where it applies, and whether you must set it.
+Every environment variable Mino reads, where it applies, and whether you must set it.
 
 | Variable | Service | Required | Notes |
 |---|---|---|---|
@@ -21,7 +21,7 @@ Generate the random secrets and the executor keypair with `./scripts/gen-secrets
 
 ## The LLM key is not here
 
-You set the LLM API key in the UI, under **Settings**. Komodo stores it in the database, encrypted
+You set the LLM API key in the UI, under **Settings**. Mino stores it in the database, encrypted
 with `ENCRYPTION_KEY`. It is deliberately not an environment variable.
 
 ## Shared values

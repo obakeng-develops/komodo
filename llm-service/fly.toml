@@ -1,4 +1,4 @@
-# fly.io config for the Komodo llm-service. Private only: a service with no public
+# fly.io config for the Mino llm-service. Private only: a service with no public
 # ports, reached over flycast (a private IPv6) at komodo-llm.flycast:8001. fly-proxy
 # forwards to the app on 0.0.0.0:8001, so no IPv6 binding is needed in the image.
 # At deploy time: fly ips allocate-v6 --private --app komodo-llm

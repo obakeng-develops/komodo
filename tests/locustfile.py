@@ -1,4 +1,4 @@
-"""Locust stress test for Komodo.
+"""Locust stress test for Mino.
 
 Drives the three real load shapes: agents beating, a dashboard user reading, and
 health checks. Point it at a LOCAL instance, not a deployment that is watching a

@@ -1,6 +1,6 @@
 # Events
 
-Komodo emits one **wide, structured event per unit of work** — a single JSON line, not a
+Mino emits one **wide, structured event per unit of work** — a single JSON line, not a
 trail of plain-text lines you have to grep and stitch together. Each line is a flat JSON
 object on the named logger, so you can filter by `event` and read an incident, a beat, or an
 action end to end.
@@ -42,7 +42,7 @@ Emitted once when an incident ends — the whole life in a single line. Logger: 
 | `llm_diagnosis` | the model's root-cause text (about the service, not the user) |
 | `llm_confidence` | `low` / `medium` / `high` |
 | `llm_action` | the action the model picked (`restart_container`, …, or `none`) |
-| `proposed_action` | the action Komodo intended to run |
+| `proposed_action` | the action Mino intended to run |
 | `user_id` | who acted, if a human did |
 | `duration_s` | seconds from open to close |
 
@@ -74,5 +74,5 @@ Emitted by the executor for each action it runs. Logger: `executor.events` (exec
 ## Shipping events somewhere
 
 Events go to stdout as JSON. A log collector (Honeycomb, OTel, Loki, …) can consume them as
-structured records without further work; Komodo does not ship them anywhere itself. Frontend
+structured records without further work; Mino does not ship them anywhere itself. Frontend
 product analytics is a separate concern — see issue #55.
