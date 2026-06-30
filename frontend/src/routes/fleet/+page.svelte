@@ -54,11 +54,16 @@
 		return 'bg-success-500';
 	}
 
+	// Mute the healthy ones to gray so the sub-100% service is the only colored
+	// number in a column of all-green rows — easier to spot at a glance.
 	function uptimeClass(pct: number) {
-		if (pct >= 99.9) return 'text-success-600';
-		if (pct >= 99) return 'text-warning-600';
-		return 'text-danger-600';
+		if (pct >= 99.9) return 'text-surface-400';
+		if (pct >= 99) return 'text-warning-600 font-medium';
+		return 'text-danger-600 font-semibold';
 	}
+
+	// Trim noise: "100%" not "100.000%", but keep 2 dp for the imperfect ones.
+	const fmtPct = (pct: number) => (pct >= 100 ? '100' : pct.toFixed(2));
 
 	// Status-page strip: one cell per time bucket (hourly for ≤48h, daily beyond),
 	// coloured by the worst incident overlapping that bucket. Each cell carries a
@@ -189,7 +194,7 @@
 												</button>
 												<button type="button" on:click={() => removeService(svc)} class="bg-transparent border-none cursor-pointer font-sans text-micro text-surface-500 underline underline-offset-[3px] decoration-surface-300 hover:text-danger-600" title="Stop watching this service">remove</button>
 											{/if}
-											<span class="font-mono text-label {uptimeClass(svc.uptime_pct)}">{svc.uptime_pct}%</span>
+											<span class="font-mono text-label {uptimeClass(svc.uptime_pct)}">{fmtPct(svc.uptime_pct)}%</span>
 										</span>
 									</div>
 									<div class="mt-2 flex items-stretch gap-px h-7 rounded overflow-hidden">

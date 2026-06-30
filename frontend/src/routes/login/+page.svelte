@@ -13,6 +13,7 @@
 	let name = '';
 	let email = '';
 	let password = '';
+	let confirmPassword = '';
 	let token = '';
 	let error: string | null = null;
 	let submitting = false;
@@ -49,8 +50,9 @@
 		}
 	}
 
+	$: passwordsMatch = !needsSetup || password === confirmPassword;
 	$: canSubmit =
-		!!email && !!password && (!needsSetup || (!!name && (!tokenRequired || !!token)));
+		!!email && !!password && (!needsSetup || (!!name && passwordsMatch && (!tokenRequired || !!token)));
 </script>
 
 <div class="min-h-screen flex items-center justify-center px-4 bg-surface-100 font-sans">
@@ -87,6 +89,16 @@
 				autocomplete={needsSetup ? 'new-password' : 'current-password'}
 			/>
 		</label>
+
+		{#if ready && needsSetup}
+			<label for="confirm-password" class="flex flex-col gap-1">
+				<span class="font-sans text-micro text-surface-500">Confirm password</span>
+				<Input id="confirm-password" type="password" bind:value={confirmPassword} required autocomplete="new-password" />
+				{#if password && confirmPassword && password !== confirmPassword}
+					<span class="font-sans text-micro text-danger-600">Passwords don't match.</span>
+				{/if}
+			</label>
+		{/if}
 
 		{#if ready && needsSetup && tokenRequired}
 			<label for="token" class="flex flex-col gap-1">
