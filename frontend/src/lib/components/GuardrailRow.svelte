@@ -21,7 +21,10 @@
 		<span class="block mt-[3px] font-sans text-xs leading-snug text-surface-500">{guardrail.description}</span>
 	</span>
 	{#if guardrail.kind === 'toggle'}
-		<Switch checked={guardrail.value} disabled={readonly} on:change={(e) => onChange(e.detail)} />
+		<span class="flex items-center gap-2 flex-shrink-0">
+			<span class="font-mono text-micro text-surface-500 w-6 text-right">{guardrail.value ? 'on' : 'off'}</span>
+			<Switch checked={guardrail.value} disabled={readonly} on:change={(e) => onChange(e.detail)} />
+		</span>
 	{:else}
 		<Badge tone="dark" class="flex-shrink-0 px-2.5 py-1 rounded-full text-micro">always on</Badge>
 	{/if}

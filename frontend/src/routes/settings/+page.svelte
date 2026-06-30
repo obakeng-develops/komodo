@@ -12,6 +12,7 @@
 	let newMemberName = '';
 	let newMemberEmail = '';
 	let newMemberPassword = '';
+	let newMemberPasswordConfirm = '';
 	let addingMember = false;
 	let teamError: string | null = null;
 	let settings: UserSettings | null = null;
@@ -155,6 +156,7 @@
 			newMemberName = '';
 			newMemberEmail = '';
 			newMemberPassword = '';
+			newMemberPasswordConfirm = '';
 			await loadTeam();
 		} catch (e) {
 			teamError = e instanceof ApiError && e.status === 409 ? 'A user with that email already exists.' : 'Could not add member.';
@@ -661,26 +663,30 @@
 					{/if}
 					<div class="flex flex-col gap-2">
 						<label class="flex flex-col gap-1">
-							<span class="font-sans text-micro text-surface-500">Backend URL</span>
+							<span class="font-sans text-micro text-surface-500">Komodo URL</span>
 							<input
 								type="url"
 								bind:value={newHostBackendUrl}
 								placeholder={serverUrl}
 								class="px-3 py-2 rounded-lg bg-white border border-surface-300 font-mono text-sm text-surface-900 focus:outline-none focus:border-surface-500"
 							/>
+							<span class="font-sans text-micro text-surface-400">Where the agent you install on the server reports back — usually this Komodo instance.</span>
 						</label>
-						<div class="flex gap-2">
-							<input
-								type="text"
-								placeholder="Server name (e.g. prod-web-01)"
-								bind:value={newHostName}
-								class="flex-1 px-3 py-2 rounded-lg bg-white border border-surface-300 font-sans text-sm text-surface-900 focus:outline-none focus:border-surface-500"
-							/>
+						<div class="flex gap-2 items-end">
+							<label class="flex flex-col gap-1 flex-1">
+								<span class="font-sans text-micro text-surface-500">Server name</span>
+								<input
+									type="text"
+									placeholder="e.g. prod-web-01"
+									bind:value={newHostName}
+									class="px-3 py-2 rounded-lg bg-white border border-surface-300 font-sans text-sm text-surface-900 focus:outline-none focus:border-surface-500"
+								/>
+							</label>
 							<button
 								type="button"
 								disabled={!newHostName.trim() || addingHost}
 								on:click={addHost}
-								class="px-4 py-2 rounded-lg bg-surface-900 text-white font-sans font-medium text-label border-none cursor-pointer hover:bg-surface-800 disabled:opacity-40 disabled:cursor-default"
+								class="flex-shrink-0 px-4 py-2 rounded-lg bg-surface-900 text-white font-sans font-medium text-label border-none cursor-pointer hover:bg-surface-800 disabled:opacity-40 disabled:cursor-default"
 							>
 								{addingHost ? 'Adding…' : 'Add server'}
 							</button>
@@ -696,18 +702,24 @@
 				</div>
 				<div class="mt-3 flex flex-col gap-2">
 					<div class="flex gap-2">
-						<input
-							type="text"
-							placeholder="Name"
-							bind:value={newUrlName}
-							class="flex-1 px-3 py-2 rounded-lg bg-white border border-surface-300 font-sans text-sm text-surface-900 focus:outline-none focus:border-surface-500"
-						/>
-						<input
-							type="url"
-							placeholder="https://api.example.com/health"
-							bind:value={newUrl}
-							class="flex-[2] px-3 py-2 rounded-lg bg-white border border-surface-300 font-mono text-sm text-surface-900 placeholder:text-surface-400 focus:outline-none focus:border-surface-500"
-						/>
+						<label class="flex flex-col gap-1 flex-1">
+							<span class="font-sans text-micro text-surface-500">Service name</span>
+							<input
+								type="text"
+								placeholder="e.g. payments-api"
+								bind:value={newUrlName}
+								class="px-3 py-2 rounded-lg bg-white border border-surface-300 font-sans text-sm text-surface-900 focus:outline-none focus:border-surface-500"
+							/>
+						</label>
+						<label class="flex flex-col gap-1 flex-[2]">
+							<span class="font-sans text-micro text-surface-500">Health check URL</span>
+							<input
+								type="url"
+								placeholder="https://api.example.com/health"
+								bind:value={newUrl}
+								class="px-3 py-2 rounded-lg bg-white border border-surface-300 font-mono text-sm text-surface-900 placeholder:text-surface-400 focus:outline-none focus:border-surface-500"
+							/>
+						</label>
 					</div>
 					<div class="flex justify-end">
 						<button
@@ -777,9 +789,13 @@
 				<div class="flex flex-col gap-2">
 					<input type="text" placeholder="Name" bind:value={newMemberName} class="px-3 py-2 rounded-lg bg-white border border-surface-300 font-sans text-sm text-surface-900 focus:outline-none focus:border-surface-500" />
 					<input type="email" placeholder="friend@example.com" bind:value={newMemberEmail} class="px-3 py-2 rounded-lg bg-white border border-surface-300 font-mono text-sm text-surface-900 focus:outline-none focus:border-surface-500" />
-					<div class="flex gap-2">
-						<input type="password" placeholder="Password" bind:value={newMemberPassword} class="flex-1 px-3 py-2 rounded-lg bg-white border border-surface-300 font-mono text-sm text-surface-900 focus:outline-none focus:border-surface-500" />
-						<button type="button" disabled={!newMemberName.trim() || !newMemberEmail.trim() || !newMemberPassword || addingMember} on:click={addMember} class="px-4 py-2 rounded-lg bg-surface-900 text-white font-sans font-medium text-label border-none cursor-pointer hover:bg-surface-800 disabled:opacity-40 disabled:cursor-default">{addingMember ? 'Adding…' : 'Add'}</button>
+					<input type="password" placeholder="Password" bind:value={newMemberPassword} class="px-3 py-2 rounded-lg bg-white border border-surface-300 font-mono text-sm text-surface-900 focus:outline-none focus:border-surface-500" />
+					<input type="password" placeholder="Confirm password" bind:value={newMemberPasswordConfirm} class="px-3 py-2 rounded-lg bg-white border border-surface-300 font-mono text-sm text-surface-900 focus:outline-none focus:border-surface-500" />
+					{#if newMemberPassword && newMemberPasswordConfirm && newMemberPassword !== newMemberPasswordConfirm}
+						<span class="font-sans text-micro text-danger-600">Passwords don't match.</span>
+					{/if}
+					<div class="flex justify-end">
+						<button type="button" disabled={!newMemberName.trim() || !newMemberEmail.trim() || !newMemberPassword || newMemberPassword !== newMemberPasswordConfirm || addingMember} on:click={addMember} class="px-4 py-2 rounded-lg bg-surface-900 text-white font-sans font-medium text-label border-none cursor-pointer hover:bg-surface-800 disabled:opacity-40 disabled:cursor-default">{addingMember ? 'Adding…' : 'Add'}</button>
 					</div>
 				</div>
 			</div>
