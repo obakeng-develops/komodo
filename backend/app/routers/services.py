@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from app.deps import allowed_host_ids, get_current_user, get_db_session, host_allowed, require_owner
 from app.models import Service, User
 from app.schemas import ServiceCreate, ServiceOut, ServiceUpdate
+from app.stream import stream_manager
 
 router = APIRouter(prefix="/services", tags=["services"])
 
@@ -58,6 +59,9 @@ def create_service(
     db.add(service)
     db.commit()
     db.refresh(service)
+    # Tell connected clients the service set changed so they refresh (the count
+    # on Now, the Sidebar, the onboarding card). See #74.
+    stream_manager.broadcast("services_changed", {})
     return _service_out(service)
 
 
@@ -91,4 +95,5 @@ def delete_service(
         raise HTTPException(status_code=404, detail="Service not found")
     db.delete(service)
     db.commit()
+    stream_manager.broadcast("services_changed", {})
     return None
