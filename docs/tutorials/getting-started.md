@@ -73,5 +73,5 @@ You ran Mino, connected a host, and watched a full incident: detect, diagnose, f
 here:
 
 - To put this on a server, read [Deploy with Docker Compose](../how-to/deploy-with-docker-compose.md).
-- To understand the decisions Mino just made, read [How Mino works](../explanation/how-komodo-works.md).
+- To understand the decisions Mino just made, read [How Mino works](../explanation/how-mino-works.md).
 - For LLM diagnoses with a real model, read [Choose an LLM provider](../how-to/choose-an-llm-provider.md).
