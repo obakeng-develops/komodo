@@ -66,14 +66,17 @@ async def lifespan(app: FastAPI):
             "Set a strong, random AUTH_SECRET before starting Komodo."
         )
     Base.metadata.create_all(bind=engine)
-    # create_all adds new tables but never alters existing ones. Add columns
-    # introduced after a table's first deploy here, idempotently.
-    with engine.begin() as conn:
-        conn.execute(text("ALTER TABLE hosts ADD COLUMN IF NOT EXISTS autonomy VARCHAR"))
-        conn.execute(text("ALTER TABLE hosts ADD COLUMN IF NOT EXISTS agent_version VARCHAR"))
-        conn.execute(text("ALTER TABLE user_settings ADD COLUMN IF NOT EXISTS fly_api_token_encrypted VARCHAR"))
-        conn.execute(text("ALTER TABLE user_settings ADD COLUMN IF NOT EXISTS fly_apps JSON"))
-        conn.execute(text("ALTER TABLE services ADD COLUMN IF NOT EXISTS fly_app VARCHAR"))
+    # create_all adds new tables but never alters existing ones. On Postgres
+    # (production), patch in columns introduced after a table's first deploy,
+    # idempotently. SQLite (local dev) has no "ADD COLUMN IF NOT EXISTS" syntax
+    # and gets every column from create_all on a fresh file, so skip it there.
+    if engine.dialect.name == "postgresql":
+        with engine.begin() as conn:
+            conn.execute(text("ALTER TABLE hosts ADD COLUMN IF NOT EXISTS autonomy VARCHAR"))
+            conn.execute(text("ALTER TABLE hosts ADD COLUMN IF NOT EXISTS agent_version VARCHAR"))
+            conn.execute(text("ALTER TABLE user_settings ADD COLUMN IF NOT EXISTS fly_api_token_encrypted VARCHAR"))
+            conn.execute(text("ALTER TABLE user_settings ADD COLUMN IF NOT EXISTS fly_apps JSON"))
+            conn.execute(text("ALTER TABLE services ADD COLUMN IF NOT EXISTS fly_app VARCHAR"))
     ensure_seed_data()
     await monitor.start()
     yield
