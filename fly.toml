@@ -1,4 +1,4 @@
-# fly.io config for the Komodo web app: the combined image (backend + SPA) on
+# fly.io config for the Mino web app: the combined image (backend + SPA) on
 # one origin. Depends on the root Dockerfile (PR "Serve the SPA from the backend").
 # `app` names are global; rename if "komodo" is taken (fly launch will prompt).
 app = "komodo"

@@ -1,6 +1,6 @@
 # Manage your team
 
-Komodo has two roles. Owners run everything. Operators, your backup on-call, see the whole fleet
+Mino has two roles. Owners run everything. Operators, your backup on-call, see the whole fleet
 and can act on incidents but cannot change settings, the LLM key, hosts, services, guardrails, or
 the team. The full split is in [Architecture](../reference/architecture.md#roles).
 
@@ -21,5 +21,5 @@ The first owner is created once, in one of two ways:
 
 - **The first-run setup page.** On a fresh deployment, the first visitor creates the owner. Set a
   `SETUP_TOKEN` on a public URL so a stranger cannot claim it first.
-- **The environment.** Set `OWNER_EMAIL` and `OWNER_PASSWORD` and Komodo creates the owner on first
+- **The environment.** Set `OWNER_EMAIL` and `OWNER_PASSWORD` and Mino creates the owner on first
   boot. This bootstrap runs once; a later restart never overwrites a password you have changed.

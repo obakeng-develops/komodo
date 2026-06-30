@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Generate Komodo's deploy secrets: the executor RSA keypair (written to
+# Generate Mino's deploy secrets: the executor RSA keypair (written to
 # ./secrets/) and the random shared secrets (printed for you to paste into .env).
 set -euo pipefail
 cd "$(dirname "$0")/.."

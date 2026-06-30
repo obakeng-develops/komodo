@@ -15,7 +15,7 @@ _events = logging.getLogger("executor.events")
 
 
 def log_event(event: str, **fields) -> None:
-    """One wide JSON line per action (see Komodo issue #54)."""
+    """One wide JSON line per action (see Mino issue #54)."""
     payload = {"event": event, "ts": datetime.utcnow().isoformat() + "Z"}
     payload.update({k: v for k, v in fields.items() if v is not None})
     _events.info(json.dumps(payload, default=str, sort_keys=True))
@@ -40,7 +40,7 @@ async def lifespan(app: FastAPI):
     yield
 
 
-app = FastAPI(title="Komodo Executor", version="1.0.0", lifespan=lifespan)
+app = FastAPI(title="Mino Executor", version="1.0.0", lifespan=lifespan)
 
 
 async def _run_action(payload: dict) -> tuple[bool, str | None]:

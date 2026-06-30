@@ -17,7 +17,7 @@ from app.stream import stream_manager
 
 router = APIRouter(prefix="/agent", tags=["agent"])
 
-_AGENT_SCRIPT = ROOT.parent / "agent" / "komodo-agent.py"
+_AGENT_SCRIPT = ROOT.parent / "agent" / "mino-agent.py"
 
 
 @lru_cache(maxsize=1)
@@ -82,7 +82,7 @@ def agent_script():
     # Public on purpose: the script is open source, and the host token (not this
     # endpoint) is what authorizes an agent's beats. This lets the install
     # one-liner run unauthenticated on a fresh host.
-    path = ROOT.parent / "agent" / "komodo-agent.py"
+    path = ROOT.parent / "agent" / "mino-agent.py"
     if not path.exists():
         raise HTTPException(status_code=404, detail="Agent script not found")
     return PlainTextResponse(path.read_text(), media_type="text/x-python")

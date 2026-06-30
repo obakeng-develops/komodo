@@ -1,7 +1,7 @@
 """Fly.io Machines API client.
 
 A Fly executor type: a service whose `method` is "fly" lives as a Fly Machine,
-and Komodo talks to the Machines API instead of the agent or `docker`. This is
+and Mino talks to the Machines API instead of the agent or `docker`. This is
 the read path — list an app's machines and map their state to a status.
 Remediation (restart/stop/start) lands in a later PR.
 """
@@ -12,7 +12,7 @@ logger = logging.getLogger("oncall.fly")
 
 API_BASE = "https://api.machines.dev/v1"
 
-# Komodo action name -> Machines API operation.
+# Mino action name -> Machines API operation.
 OPS = {"restart_container": "restart", "stop_container": "stop", "start_container": "start"}
 
 
@@ -47,7 +47,7 @@ async def machine_action(app: str, machine_id: str, op: str, token: str) -> bool
 
 
 def machine_status(state: str | None) -> str:
-    """Fly machine.state -> Komodo status. `started` is healthy; a stopped or
+    """Fly machine.state -> Mino status. `started` is healthy; a stopped or
     failed machine is down; transitional states are degraded.
 
     ponytail: state-based. Fly also exposes per-machine health checks; fold them

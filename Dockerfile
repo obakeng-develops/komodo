@@ -1,4 +1,4 @@
-# Combined Komodo web image: the FastAPI backend serves the built SvelteKit SPA
+# Combined Mino web image: the FastAPI backend serves the built SvelteKit SPA
 # and /api on one origin. Used by fly.io and by docker-compose's `web` service.
 
 # 1) Build the SPA (adapter-static -> /web/build)
@@ -16,7 +16,7 @@ COPY backend/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 COPY backend/app ./app
 COPY --from=web /web/build ./static
-# GET /api/v1/agent/script serves this (ROOT.parent/agent/komodo-agent.py -> /agent/...)
+# GET /api/v1/agent/script serves this (ROOT.parent/agent/mino-agent.py -> /agent/...)
 COPY agent /agent
 ENV PYTHONUNBUFFERED=1
 EXPOSE 8000

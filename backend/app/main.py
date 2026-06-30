@@ -63,7 +63,7 @@ async def lifespan(app: FastAPI):
     if get_settings().auth_secret == DEFAULT_AUTH_SECRET:
         raise RuntimeError(
             "AUTH_SECRET is unset (still the built-in default). "
-            "Set a strong, random AUTH_SECRET before starting Komodo."
+            "Set a strong, random AUTH_SECRET before starting Mino."
         )
     Base.metadata.create_all(bind=engine)
     # create_all adds new tables but never alters existing ones. On Postgres
@@ -83,7 +83,7 @@ async def lifespan(app: FastAPI):
     await monitor.stop()
 
 
-app = FastAPI(title="Komodo API", version="1.0.0", lifespan=lifespan)
+app = FastAPI(title="Mino API", version="1.0.0", lifespan=lifespan)
 
 app_settings = get_settings()
 app.add_middleware(
