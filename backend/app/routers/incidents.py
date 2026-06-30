@@ -48,12 +48,10 @@ def list_incidents(
             Service.host_id.in_(allowed)
         )
     items, next_cursor, has_more = paginate(
-        db,
         query,
         cursor=params.cursor,
         limit=params.limit,
         sort_column=Incident.started_at,
-        sort_asc=False,
     )
 
     service_names = {s.id: s.name for s in user.services}
