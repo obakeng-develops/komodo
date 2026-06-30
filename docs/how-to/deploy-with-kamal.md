@@ -35,8 +35,8 @@ Kamal builds only the web image, so push the llm-service and executor images to 
 A starting point:
 
 ```yaml
-service: komodo
-image: ghcr.io/<you>/komodo
+service: mino
+image: ghcr.io/<you>/mino
 
 servers:
   web:
@@ -44,7 +44,7 @@ servers:
 
 proxy:
   ssl: true
-  host: komodo.example.com
+  host: mino.example.com
 
 registry:
   server: ghcr.io
@@ -54,8 +54,8 @@ registry:
 
 env:
   clear:
-    LLM_SERVICE_URL: http://komodo-llm-service:8001
-    DATABASE_URL: postgresql+psycopg://komodo:PASS@komodo-postgres:5432/komodo
+    LLM_SERVICE_URL: http://mino-llm-service:8001
+    DATABASE_URL: postgresql+psycopg://mino:PASS@mino-postgres:5432/mino
     COOKIE_SECURE: "true"
   secret:
     - ENCRYPTION_KEY
@@ -69,19 +69,19 @@ accessories:
     image: postgres:16-alpine
     host: your.server.ip
     env:
-      clear: { POSTGRES_USER: komodo, POSTGRES_DB: komodo }
+      clear: { POSTGRES_USER: mino, POSTGRES_DB: mino }
       secret: [ POSTGRES_PASSWORD ]
     directories:
       - data:/var/lib/postgresql/data
 
   llm-service:
-    image: ghcr.io/<you>/komodo-llm-service   # build and push this yourself
+    image: ghcr.io/<you>/mino-llm-service   # build and push this yourself
     host: your.server.ip
     env:
       secret: [ ENCRYPTION_KEY, INTERNAL_API_KEY ]
 
   executor:
-    image: ghcr.io/<you>/komodo-executor       # build and push this yourself
+    image: ghcr.io/<you>/mino-executor       # build and push this yourself
     host: your.server.ip
     options:
       privileged: true
