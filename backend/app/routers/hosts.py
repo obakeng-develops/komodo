@@ -8,6 +8,7 @@ from app.deps import get_current_user, get_db_session, hash_agent_token, require
 from app.models import Host, User
 from app.routers.agent import current_agent_version
 from app.schemas import HostCreate, HostOut, HostUpdate
+from app.stream import stream_manager
 from pydantic import BaseModel
 from datetime import datetime
 
@@ -119,6 +120,9 @@ def delete_host(
         db.delete(service)
     db.delete(host)
     db.commit()
+    # Removing a host drops its services; tell clients to refresh so the UI
+    # stops "watching" a server that's gone. See #74.
+    stream_manager.broadcast("services_changed", {})
     return None
 
 
