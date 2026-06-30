@@ -11,8 +11,8 @@ needs Python 3 and access to the Docker socket.
 3. Run it on the host:
 
 ```bash
-curl -fsSL https://komodo.example.com/api/v1/agent/script \
-  | python3 - --server https://komodo.example.com --token <agent-token>
+curl -fsSL https://mino.example.com/api/v1/agent/script \
+  | python3 - --server https://mino.example.com --token <agent-token>
 ```
 
 The agent reports `docker ps` every few seconds and runs `docker restart` only when Mino approves
@@ -29,15 +29,15 @@ Description=Mino agent
 After=docker.service
 
 [Service]
-ExecStart=/usr/bin/python3 /opt/komodo/mino-agent.py \
-  --server https://komodo.example.com --token <agent-token>
+ExecStart=/usr/bin/python3 /opt/mino/mino-agent.py \
+  --server https://mino.example.com --token <agent-token>
 Restart=always
 
 [Install]
 WantedBy=multi-user.target
 ```
 
-Save the script to `/opt/komodo/mino-agent.py` first (download it from the same `/api/v1/agent/script`
+Save the script to `/opt/mino/mino-agent.py` first (download it from the same `/api/v1/agent/script`
 URL), then `systemctl enable --now mino-agent`.
 
 ## Agent flags

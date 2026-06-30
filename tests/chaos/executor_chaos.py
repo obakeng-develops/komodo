@@ -75,7 +75,7 @@ def main():
     tmp.write_text(pub)
 
     print("building executor image...")
-    subprocess.run(["docker", "build", "-q", "-t", "komodo-executor-chaos", str(ROOT / "executor")],
+    subprocess.run(["docker", "build", "-q", "-t", "mino-executor-chaos", str(ROOT / "executor")],
                    check=True, stdout=subprocess.DEVNULL)
     subprocess.run(["docker", "rm", "-f", "chaos-executor", TARGET], stdout=subprocess.DEVNULL,
                    stderr=subprocess.DEVNULL)
@@ -90,7 +90,7 @@ def main():
         "-v", f"{tmp}:/keys/executor.pub:ro",
         "-e", "PUBLIC_KEY_FILE=/keys/executor.pub",
         "-e", "ALLOW_SIMULATE=true",
-        "komodo-executor-chaos",
+        "mino-executor-chaos",
     ], check=True, stdout=subprocess.DEVNULL)
 
     try:

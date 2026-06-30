@@ -11,9 +11,9 @@ with the [agent](install-the-agent.md), which restarts containers itself.
 ## 1. Create the app and a database
 
 ```bash
-fly apps create komodo            # pick a free name if taken
+fly apps create mino            # pick a free name if taken
 fly postgres create --region jnb  # managed Postgres
-fly postgres attach komodo-db --app komodo   # sets DATABASE_URL on the app
+fly postgres attach mino-db --app mino   # sets DATABASE_URL on the app
 ```
 
 ## 2. Set the secrets
@@ -22,7 +22,7 @@ Generate the random values with `./scripts/gen-secrets.sh` (you only need the th
 no executor keypair, since there is no executor on fly).
 
 ```bash
-fly secrets set --app komodo \
+fly secrets set --app mino \
   AUTH_SECRET=...        \
   ENCRYPTION_KEY=...     \
   INTERNAL_API_KEY=...   \
@@ -42,11 +42,11 @@ fly deploy
 ## 4. Point your domain at it
 
 ```bash
-fly certs create komodo.example.com --app komodo
+fly certs create mino.example.com --app mino
 ```
 
 Add the records fly prints (a CNAME, or A + AAAA) to your DNS. Once the certificate is issued, open
-`https://komodo.example.com`, complete the first-run owner setup (it asks for your `SETUP_TOKEN`),
+`https://mino.example.com`, complete the first-run owner setup (it asks for your `SETUP_TOKEN`),
 and add your LLM key in **Settings**.
 
 ## 5. Watch a host
@@ -60,16 +60,16 @@ Run the llm-service as a second, private fly app and point the web app at it.
 
 ```bash
 cd llm-service
-fly apps create komodo-llm
-fly ips allocate-v6 --private --app komodo-llm   # private flycast address
-fly secrets set --app komodo-llm ENCRYPTION_KEY=<same> INTERNAL_API_KEY=<same>
+fly apps create mino-llm
+fly ips allocate-v6 --private --app mino-llm   # private flycast address
+fly secrets set --app mino-llm ENCRYPTION_KEY=<same> INTERNAL_API_KEY=<same>
 fly deploy
 ```
 
 Then point the web app at it over flycast:
 
 ```bash
-fly secrets set --app komodo LLM_SERVICE_URL=http://komodo-llm.flycast:8001
+fly secrets set --app mino LLM_SERVICE_URL=http://mino-llm.flycast:8001
 ```
 
 Give the llm-service the **same** `ENCRYPTION_KEY` and `INTERNAL_API_KEY` as the web app, or the
