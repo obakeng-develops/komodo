@@ -254,6 +254,9 @@ class ActiveIncidentState(BaseModel):
     llm_diagnosis: str | None = None
     llm_suggested_fix: str | None = None
     llm_confidence: str | None = None
+    # Diagnosis attempt finished with nothing usable — UI shows a terminal
+    # "unavailable" state instead of an eternal "pending". See #73.
+    diagnosis_unavailable: bool = False
 
 
 class CursorParams(BaseModel):

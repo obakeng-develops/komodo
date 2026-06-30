@@ -14,7 +14,8 @@
 	import type { Service, UserSettings } from '$lib/types';
 
 	let settings: UserSettings | null = null;
-	let services: Service[] = [];
+	// Services are owned by the layout, which keeps servicesStore fresh. See #74.
+	$: services = $servicesStore;
 	let loading = false;
 	let viewKey = 'resting';
 	let logContainer: HTMLPreElement | null = null;
@@ -24,10 +25,6 @@
 
 	onMount(() => {
 		api.settings.get().then((s) => (settings = s));
-		api.services.list().then((s) => {
-			services = s;
-			servicesStore.set(s);
-		});
 	});
 
 	$: if ($activeIncident) {
@@ -247,8 +244,8 @@
 							{:else}
 								<div class="mt-5 px-4 py-3 rounded-lg bg-surface-50 border border-surface-200">
 									<div class="font-mono text-[11px] text-surface-500 tracking-wide uppercase">Diagnosis</div>
-									<div class="mt-1.5 font-sans text-[15px] leading-relaxed text-surface-700">
-										Diagnosis pending…
+									<div class="mt-1.5 font-sans text-[15px] leading-relaxed {$activeIncident.diagnosis_unavailable ? 'text-surface-500' : 'text-surface-700'}">
+										{#if $activeIncident.diagnosis_unavailable}No diagnosis — LLM unavailable{:else}Diagnosis pending…{/if}
 									</div>
 								</div>
 							{/if}
@@ -311,8 +308,8 @@
 							{:else}
 								<div class="mt-5 px-4 py-3 rounded-lg bg-surface-50 border border-surface-200">
 									<div class="font-mono text-[11px] text-surface-500 tracking-wide uppercase">Diagnosis</div>
-									<div class="mt-1.5 font-sans text-[15px] leading-relaxed text-surface-700">
-										Diagnosis pending…
+									<div class="mt-1.5 font-sans text-[15px] leading-relaxed {$activeIncident.diagnosis_unavailable ? 'text-surface-500' : 'text-surface-700'}">
+										{#if $activeIncident.diagnosis_unavailable}No diagnosis — LLM unavailable{:else}Diagnosis pending…{/if}
 									</div>
 								</div>
 							{/if}

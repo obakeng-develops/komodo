@@ -169,5 +169,6 @@ export interface ActiveIncidentState {
   llm_diagnosis: string | null;
   llm_suggested_fix: string | null;
   llm_confidence: 'low' | 'medium' | 'high' | null;
+  diagnosis_unavailable?: boolean;
 }
 
