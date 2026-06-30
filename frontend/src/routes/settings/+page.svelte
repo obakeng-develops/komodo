@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { api, ApiError } from '$lib/api';
-	import { servicesNeedRefresh, servicesStore } from '$lib/stream';
+	import { servicesStore } from '$lib/stream';
 	import { isOwner } from '$lib/auth';
 	import AutonomyToggle from '$lib/components/AutonomyToggle.svelte';
 	import type { Host, Service, TeamMember, User, UserSettings } from '$lib/types';
@@ -74,7 +74,6 @@
 		load();
 		return () => {
 			stopAddHostPoll();
-			unsubscribeServices();
 		};
 	});
 
@@ -299,15 +298,6 @@
 		}
 	}
 
-	const unsubscribeServices = servicesNeedRefresh.subscribe(async () => {
-		try {
-			services = await api.services.list();
-			servicesStore.set(services);
-		} catch {
-			// ignore background refresh failures
-		}
-	});
-
 	async function addHost() {
 		addHostInternal();
 	}
@@ -345,6 +335,7 @@
 		try {
 			const service = await api.services.createUrl(name, url);
 			services = [...services, service];
+			servicesStore.set(services);
 			newUrlName = '';
 			newUrl = '';
 		} finally {

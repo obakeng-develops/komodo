@@ -184,10 +184,10 @@
 										</span>
 										<span class="flex items-center gap-3 flex-shrink-0">
 											{#if $isOwner}
-												<button type="button" on:click={() => toggleWatchOnly(svc)} class="bg-transparent border-none cursor-pointer font-sans text-micro text-surface-400 hover:text-surface-700" title={svc.watch_only ? 'Let Komodo act on this again' : 'Watch only — Komodo flags it but never restarts it'}>
-													{svc.watch_only ? 'allow fixes' : 'watch-only'}
+												<button type="button" on:click={() => toggleWatchOnly(svc)} class="bg-transparent border-none cursor-pointer font-sans text-micro text-surface-500 underline underline-offset-[3px] decoration-surface-300 hover:text-surface-900" title={svc.watch_only ? 'Let Komodo act on this again' : 'Watch only — Komodo flags it but never restarts it'}>
+													{svc.watch_only ? 'allow fixes' : 'pause fixes'}
 												</button>
-												<button type="button" on:click={() => removeService(svc)} class="bg-transparent border-none cursor-pointer font-sans text-micro text-surface-400 hover:text-danger-600" title="Stop watching this service">remove</button>
+												<button type="button" on:click={() => removeService(svc)} class="bg-transparent border-none cursor-pointer font-sans text-micro text-surface-500 underline underline-offset-[3px] decoration-surface-300 hover:text-danger-600" title="Stop watching this service">remove</button>
 											{/if}
 											<span class="font-mono text-label {uptimeClass(svc.uptime_pct)}">{svc.uptime_pct}%</span>
 										</span>
