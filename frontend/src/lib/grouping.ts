@@ -1,4 +1,4 @@
-import type { Service } from './types';
+import type { Incident, Service } from './types';
 
 export interface ServerGroup {
 	name: string; // host name, or a label for hostless (URL) checks
@@ -32,4 +32,31 @@ export function serverRollup(g: ServerGroup): string {
 	if (g.down) return `${g.down} down`;
 	if (g.degraded) return `${g.degraded} degraded`;
 	return 'all healthy';
+}
+
+export interface IncidentGroup {
+	service_id: string;
+	name: string; // service/machine name
+	incidents: Incident[];
+}
+
+// Group incidents by service (machine), most-recently-active group first; the
+// incidents within a group keep their input order (newest first). Grouping only
+// spans the incidents passed in — i.e. the pages loaded so far. See #76.
+export function groupByService(incidents: Incident[]): IncidentGroup[] {
+	const byId = new Map<string, Incident[]>();
+	for (const inc of incidents) {
+		const list = byId.get(inc.service_id) ?? [];
+		list.push(inc);
+		byId.set(inc.service_id, list);
+	}
+	const recency = (list: Incident[]) =>
+		Math.max(...list.map((i) => new Date(i.started_at).getTime() || 0));
+	return [...byId.entries()]
+		.map(([service_id, list]) => ({
+			service_id,
+			name: list[0].service_name ?? service_id,
+			incidents: list,
+		}))
+		.sort((a, b) => recency(b.incidents) - recency(a.incidents));
 }
