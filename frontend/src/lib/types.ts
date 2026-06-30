@@ -131,6 +131,7 @@ export interface Learning {
   behavior: 'auto_fix' | 'ask_first';
   incident_count: number;
   success_count: number;
+  updated_at: string | null;
 }
 
 export interface Guardrail {

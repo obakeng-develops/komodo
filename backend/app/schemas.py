@@ -217,6 +217,7 @@ class LearningOut(BaseModel):
     behavior: str
     incident_count: int
     success_count: int
+    updated_at: datetime | None = None  # ~last time this rule recovered the service
 
 
 class GuardrailOut(BaseModel):
