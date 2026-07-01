@@ -12,7 +12,7 @@
 	let incidents: Incident[] = [];
 	let hasMore = false;
 	let nextCursor: string | null = null;
-	let loading = false;
+	let loading = true;
 	let openId: string | null = null;
 
 	onMount(() => {
@@ -84,7 +84,28 @@
 			</div>
 		{/if}
 
-		{#if incidents.length === 0 && !loading}
+		{#if loading && incidents.length === 0}
+			<div class="mt-6 flex flex-col gap-5" aria-hidden="true">
+				{#each [0, 1] as _card}
+					<div class="bg-white border border-surface-300 rounded-2xl shadow-card overflow-hidden">
+						<div class="px-5 pt-4 pb-3 flex items-baseline justify-between">
+							<div class="h-3 w-32 rounded bg-surface-200 animate-pulse"></div>
+							<div class="h-3 w-16 rounded bg-surface-100 animate-pulse"></div>
+						</div>
+						{#each [0, 1] as _row}
+							<div class="px-5 py-[18px] flex items-center gap-[18px] border-t border-surface-300">
+								<div class="h-6 w-[78px] rounded-full bg-surface-100 animate-pulse flex-shrink-0"></div>
+								<div class="flex-1 flex flex-col gap-2">
+									<div class="h-3 w-24 rounded bg-surface-100 animate-pulse"></div>
+									<div class="h-3.5 w-3/5 rounded bg-surface-200 animate-pulse"></div>
+								</div>
+								<div class="h-3 w-16 rounded bg-surface-100 animate-pulse flex-shrink-0"></div>
+							</div>
+						{/each}
+					</div>
+				{/each}
+			</div>
+		{:else if incidents.length === 0}
 			<div class="mt-6 bg-white border border-surface-300 rounded-2xl shadow-card px-5 py-8 text-center font-sans text-sm text-surface-500">
 				No incidents yet.
 			</div>
