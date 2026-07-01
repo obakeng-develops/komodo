@@ -8,6 +8,7 @@
 
 	let learnings: Learning[] = [];
 	let guardrails: GuardrailType[] = [];
+	let loading = true;
 
 	onMount(() => {
 		load();
@@ -18,10 +19,14 @@
 	}
 
 	async function load() {
-		[learnings, guardrails] = await Promise.all([
-			api.learnings.list(),
-			api.guardrails.list(),
-		]);
+		try {
+			[learnings, guardrails] = await Promise.all([
+				api.learnings.list(),
+				api.guardrails.list(),
+			]);
+		} finally {
+			loading = false;
+		}
 	}
 
 	async function toggleGuardrail(key: string, value: boolean) {
@@ -71,7 +76,19 @@
 
 		<div class="mt-7 font-sans font-semibold text-label text-surface-700">What I've learned</div>
 		<div class="mt-3.5 flex flex-col gap-3">
-			{#each learnings as learning (learning.id)}
+			{#if loading && learnings.length === 0}
+				{#each [0, 1] as _card}
+					<div class="bg-white border border-surface-300 rounded-xl p-5 shadow-sm" aria-hidden="true">
+						<div class="flex justify-between items-center gap-3">
+							<div class="h-5 w-28 rounded-md bg-surface-100 animate-pulse"></div>
+							<div class="h-6 w-24 rounded-full bg-surface-100 animate-pulse"></div>
+						</div>
+						<div class="mt-3 h-4 w-4/5 rounded bg-surface-200 animate-pulse"></div>
+						<div class="mt-2.5 h-3 w-1/2 rounded bg-surface-100 animate-pulse"></div>
+					</div>
+				{/each}
+			{:else}
+				{#each learnings as learning (learning.id)}
 				<div class="bg-white border border-surface-300 rounded-xl p-5 shadow-sm">
 					<div class="flex justify-between items-center gap-3">
 						<span class={serviceChipClass()}>{learning.service_name || 'all containers'}</span>
@@ -94,16 +111,29 @@
 				</div>
 			{:else}
 				<div class="font-sans text-xs text-surface-500">Nothing learned yet — it picks up rules as it recovers containers.</div>
-			{/each}
+				{/each}
+			{/if}
 		</div>
 
 		<div class="mt-8 font-sans font-semibold text-label text-surface-700">Your guardrails</div>
 		<div class="mt-1 font-sans text-sm leading-relaxed text-surface-500">Hard limits the agent obeys on every restart. Locked ones can't be turned off.</div>
 
 		<div class="mt-3.5 bg-white border border-surface-300 rounded-2xl overflow-hidden shadow-sm">
-			{#each guardrails as guardrail (guardrail.id)}
-				<GuardrailRow {guardrail} readonly={!$isOwner} on:toggle={(e) => toggleGuardrail(e.detail.key, e.detail.value)} />
-			{/each}
+			{#if loading && guardrails.length === 0}
+				{#each [0, 1, 2] as _row}
+					<div class="px-[18px] py-4 flex items-center justify-between gap-4 border-t border-surface-300" aria-hidden="true">
+						<div class="flex-1 flex flex-col gap-2">
+							<div class="h-3.5 w-40 rounded bg-surface-200 animate-pulse"></div>
+							<div class="h-3 w-3/4 rounded bg-surface-100 animate-pulse"></div>
+						</div>
+						<div class="h-5 w-10 rounded-full bg-surface-100 animate-pulse flex-shrink-0"></div>
+					</div>
+				{/each}
+			{:else}
+				{#each guardrails as guardrail (guardrail.id)}
+					<GuardrailRow {guardrail} readonly={!$isOwner} on:toggle={(e) => toggleGuardrail(e.detail.key, e.detail.value)} />
+				{/each}
+			{/if}
 		</div>
 	</div>
 </div>
