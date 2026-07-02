@@ -618,7 +618,7 @@ class ServiceMonitor:
         if self._opened_at:
             self._elapsed = int((now - self._opened_at).total_seconds())
         if cur and cur.status == "healthy":
-            await self._finish("resolved", f"Restarted {self._container} — it came back healthy")
+            await self._finish("resolved", f"Restarted {self._container}. It came back healthy")
             return
         # The verify timeout is wall-clock since the restart was issued, so it
         # doesn't depend on how often — or from how many sources — the monitor
@@ -631,7 +631,7 @@ class ServiceMonitor:
             and self._fixing_since
             and (now - self._fixing_since).total_seconds() >= get_settings().docker_verify_timeout_seconds
         ):
-            await self._finish("escalated", "Restart didn't bring it back in time — handed to you")
+            await self._finish("escalated", "Restart didn't bring it back in time. Handed to you")
             return
         if self._view == "fixing":
             self._view = "verifying"
@@ -699,7 +699,7 @@ class ServiceMonitor:
             else:
                 self._awaiting_logs_task = asyncio.create_task(self._wait_then_ask())
         elif info["rate_limited"]:
-            await self._finish("escalated", "Hit the restart limit (3/hour) — handed to you")
+            await self._finish("escalated", "Hit the restart limit (3/hour). Handed to you")
             return
         elif self._method == "agent":
             # ponytail: pause to collect logs and LLM diagnosis before acting.
@@ -794,7 +794,7 @@ class ServiceMonitor:
                 if self._llm_action == "none":
                     # The model judged a restart won't help — don't auto-restart
                     # into the same failure; hand it to a person. See issue #44.
-                    await self._finish("escalated", "A restart likely won't fix this — handed to you")
+                    await self._finish("escalated", "A restart likely won't fix this. Handed to you")
                 else:
                     await self._do_restart()
                 self._broadcast_state()
@@ -808,7 +808,7 @@ class ServiceMonitor:
         async with self._lock:
             if self._view in ("detecting", "diagnosing") and self._incident_id:
                 if self._llm_action == "none":
-                    await self._finish("escalated", "A restart likely won't fix this — handed to you")
+                    await self._finish("escalated", "A restart likely won't fix this. Handed to you")
                 else:
                     await self._do_restart()
                 self._broadcast_state()
@@ -820,14 +820,14 @@ class ServiceMonitor:
             action = self._proposed_fix_action or {"action": "restart_container", "container": self._container}
             if not _is_allowed_action(action):
                 logger.warning("refusing disallowed action: %s", action)
-                await self._finish("escalated", "Refusing unsafe fix command — handed to you")
+                await self._finish("escalated", "Refusing unsafe fix command. Handed to you")
                 return
             self._pending_agent_restarts[self._service_id] = action
             self._view = "fixing"
             self._elapsed = 0
             self._fixing_since = datetime.utcnow()
         elif self._method == "url":
-            await self._finish("escalated", "I can't restart a URL endpoint — handing to you")
+            await self._finish("escalated", "I can't restart a URL endpoint. Handing to you")
         elif self._method == "fly":
             action = self._proposed_fix_action or {}
             machine_id = action.get("container")
@@ -835,10 +835,10 @@ class ServiceMonitor:
             op = fly.OPS.get(action.get("action"))
             _, token = await asyncio.to_thread(self._fly_config)
             if not (machine_id and app and op and token and _is_allowed_action(action)):
-                await self._finish("escalated", "Can't run the Fly action safely — handing to you")
+                await self._finish("escalated", "Can't run the Fly action safely. Handing to you")
                 return
             if not await fly.machine_action(app, machine_id, op, token):
-                await self._finish("escalated", "Fly action failed — handing to you")
+                await self._finish("escalated", "Fly action failed. Handing to you")
                 return
             self._view = "fixing"
             self._elapsed = 0
@@ -1103,13 +1103,13 @@ class ServiceMonitor:
                 severity=severity,
                 status="escalated",
                 summary=f"{snapshot.name} is {severity}",
-                diagnosis=f"{snapshot.name} is watch-only — I flagged it but won't touch it.",
+                diagnosis=f"{snapshot.name} is watch-only. I flagged it but won't touch it.",
                 confidence_pct=95,
                 sure=True,
                 started_at=now,
                 resolved_at=now,
                 duration_seconds=0,
-                action_taken="watch-only — I won't touch this one",
+                action_taken="watch-only. I won't touch this one",
             )
             incident.events.append(
                 IncidentEvent(
@@ -1259,7 +1259,7 @@ class ServiceMonitor:
         if not self._incident_id:
             return []
         name = self._container
-        detected = {"kind": "done", "text": f"Detected — {name} is {self._severity}", "time": "now"}
+        detected = {"kind": "done", "text": f"Detected: {name} is {self._severity}", "time": "now"}
         # Name the platform and the verb honestly — a Fly machine isn't "docker".
         platform = "fly" if self._method == "fly" else "docker"
         verb = {"stop_container": "stop", "start_container": "start"}.get(
@@ -1279,18 +1279,18 @@ class ServiceMonitor:
                 )
                 return [
                     detected,
-                    {"kind": "wait", "text": f"Waiting for you — {reason}", "time": "paused"},
+                    {"kind": "wait", "text": f"Waiting for you: {reason}", "time": "paused"},
                 ]
             return [
                 detected,
-                {"kind": "wait", "text": f"Waiting for you — approve a {platform} {verb}", "time": "paused"},
+                {"kind": "wait", "text": f"Waiting for you: approve a {platform} {verb}", "time": "paused"},
                 {"kind": "pending", "text": f"{verb.capitalize()} {name}", "time": ""},
                 {"kind": "pending", "text": "Verify it comes back healthy", "time": ""},
             ]
         if self._view == "takeover":
             return [
                 detected,
-                {"kind": "wait", "text": "You took it — I'll stand by", "time": "paused"},
+                {"kind": "wait", "text": "You took it. I'll stand by", "time": "paused"},
             ]
 
         resolved = self._view == "resolved"
@@ -1304,7 +1304,7 @@ class ServiceMonitor:
             },
             {
                 "kind": "done" if resolved else "active",
-                "text": "Verify — waiting for healthy",
+                "text": "Verify: waiting for healthy",
                 "time": "healthy again" if resolved else f"checking… {te}s",
             },
             {

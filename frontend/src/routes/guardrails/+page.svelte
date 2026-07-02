@@ -99,7 +99,7 @@
 					</div>
 				</div>
 			{:else}
-				<div class="font-sans text-xs text-surface-500">Nothing learned yet — it picks up rules as it recovers containers.</div>
+				<div class="font-sans text-xs text-surface-500">Nothing learned yet. It picks up rules as it recovers containers.</div>
 				{/each}
 			{/if}
 		</div>

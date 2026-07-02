@@ -504,7 +504,7 @@
 			<div class="mt-5 bg-white border border-surface-300 rounded-card p-5 shadow-card">
 				<div class="font-sans font-semibold text-label text-surface-700">Fly.io</div>
 				<div class="mt-1 font-sans text-xs leading-snug text-surface-500">
-					Watch services running as Fly Machines. Add a Fly API token and the apps to watch; Mino lists each app's machines and flags any that go down. (Restarting them comes later — for now it alerts.)
+					Watch services running as Fly Machines. Add a Fly API token and the apps to watch; Mino lists each app's machines and flags any that go down. (Restarting them comes later. For now it alerts.)
 				</div>
 				{#if settings?.fly_api_token}
 					<div class="mt-3.5 flex items-center gap-3 bg-white border border-surface-300 rounded-xl px-4 py-3.5">
@@ -670,7 +670,7 @@
 								placeholder={serverUrl}
 								class="px-3 py-2 rounded-lg bg-white border border-surface-300 font-mono text-sm text-surface-900 focus:outline-none focus:border-surface-500"
 							/>
-							<span class="font-sans text-micro text-surface-400">Where the agent you install on the server reports back — usually this Mino instance.</span>
+							<span class="font-sans text-micro text-surface-400">Where the agent you install on the server reports back, usually this Mino instance.</span>
 						</label>
 						<div class="flex gap-2 items-end">
 							<label class="flex flex-col gap-1 flex-1">
@@ -737,7 +737,7 @@
 		<div class="mt-5 bg-white border border-surface-300 rounded-card p-5 shadow-card">
 			<div class="font-sans font-semibold text-label text-surface-700">Team</div>
 			<div class="mt-1 font-sans text-xs leading-snug text-surface-500">
-				People who can sign in. Operators act on incidents but can't change settings. Scope each operator to specific servers below — or leave it open for full access.
+				People who can sign in. Operators act on incidents but can't change settings. Scope each operator to specific servers below, or leave it open for full access.
 			</div>
 			<div class="mt-3.5 flex flex-col gap-2.5">
 				{#each teamMembers as member (member.id)}
@@ -767,7 +767,7 @@
 										<button
 											type="button"
 											on:click={() => toggleMemberServer(member.id, host.id)}
-											title={on ? 'Allowed — click to revoke' : 'Click to allow this server'}
+											title={on ? 'Allowed. Click to revoke' : 'Click to allow this server'}
 											class="px-2 py-0.5 rounded-md font-mono text-micro border cursor-pointer {on ? 'bg-surface-900 text-white border-surface-900' : 'bg-white text-surface-600 border-surface-300 hover:bg-surface-50'}"
 										>{host.name}</button>
 									{/each}
@@ -778,7 +778,7 @@
 					</div>
 				{/each}
 				{#if !teamMembers.some((m) => m.role === 'operator')}
-					<div class="font-sans text-xs text-surface-500">No operators yet — add a friend below.</div>
+					<div class="font-sans text-xs text-surface-500">No operators yet. Add a friend below.</div>
 				{/if}
 			</div>
 			<div class="mt-4 pt-4 border-t border-surface-200">
