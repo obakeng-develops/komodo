@@ -92,3 +92,7 @@ cd frontend && npm install && npm run dev
 
 Open http://localhost:5173 and create the owner account. The full walkthrough is in the
 [tutorial](docs/tutorials/getting-started.md).
+
+## License
+
+MIT — see [LICENSE](LICENSE).
