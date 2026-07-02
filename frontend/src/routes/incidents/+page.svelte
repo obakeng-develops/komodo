@@ -104,14 +104,17 @@
 
 		{#if hasActive}
 			<div
-				class="mt-5 bg-white border border-surface-300 border-l-[3px] border-l-surface-900 rounded-card px-5 py-4 flex flex-wrap gap-3 justify-between items-center shadow-sm"
+				class="mt-5 bg-surface-900 rounded-card px-5 py-[18px] flex flex-wrap gap-4 justify-between items-center shadow-card"
 				in:fly={{ y: -10, duration: 250 }}
 			>
 				<div class="min-w-0">
-					<div class="font-mono text-micro text-surface-900 tracking-widest uppercase">happening now</div>
-					<div class="mt-1.5 font-serif text-heading leading-snug text-surface-900">{activeText()}</div>
+					<div class="inline-flex items-center gap-2 font-mono text-micro text-surface-400 tracking-widest uppercase">
+						<span class="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
+						happening now
+					</div>
+					<div class="mt-2 font-serif text-heading leading-snug text-white">{activeText()}</div>
 				</div>
-				<Button on:click={() => goto('/now')}>Open</Button>
+				<Button variant="secondary" on:click={() => goto('/now')}>Open</Button>
 			</div>
 		{/if}
 
