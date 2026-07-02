@@ -1267,6 +1267,20 @@ class ServiceMonitor:
         )
 
         if self._view == "asking":
+            # When there's no runnable fix (a URL check can't be restarted, or the
+            # model judged a restart won't help — e.g. an OOM), don't lay out a
+            # restart plan the card has already ruled out. Match the heading.
+            restartable = self._method != "url" and self._llm_action != "none"
+            if not restartable:
+                reason = (
+                    "I can't restart a URL check"
+                    if self._method == "url"
+                    else "a restart won't fix this"
+                )
+                return [
+                    detected,
+                    {"kind": "wait", "text": f"Waiting for you — {reason}", "time": "paused"},
+                ]
             return [
                 detected,
                 {"kind": "wait", "text": f"Waiting for you — approve a {platform} {verb}", "time": "paused"},
