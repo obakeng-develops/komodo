@@ -592,14 +592,20 @@ class ServiceMonitor:
 
     async def _process_sources(self, snapshots: dict[str, _ServiceSnapshot], source_name: str):
         await self._reconcile_active_incident()
+        await self._close_recovered_takeovers(snapshots)
         by_name = {s.name: s for s in snapshots.values()}
 
         if self._view in ACTIVE_VIEWS:
             await self._advance_active(by_name)
         elif self._view in ("asking", "takeover"):
             cur = by_name.get(self._container)
-            if self._view == "asking" and cur and cur.status == "healthy":
-                await self._finish("resolved", "Recovered on its own before I acted")
+            if cur and cur.status == "healthy":
+                note = (
+                    "Recovered on its own before I acted"
+                    if self._view == "asking"
+                    else "It recovered while you had it"
+                )
+                await self._finish("resolved", note)
             else:
                 self._broadcast_state()
         else:
@@ -945,6 +951,47 @@ class ServiceMonitor:
             logger.info("active incident %s is gone from the DB; resetting to resting", self._incident_id)
             self._reset_to_resting()
             self._broadcast_state()
+
+    async def _close_recovered_takeovers(self, snapshots: dict[str, _ServiceSnapshot]):
+        """A taken-over incident is the human's, but Mino keeps standing by. Once the
+        service is healthy again there is nothing left for anyone to do, so close it
+        out. Otherwise the Incidents list keeps flagging "needs you" for a container
+        that already recovered. The live "takeover" view resolves in _process_sources;
+        this catches incidents already marked took_over after the human closed the card."""
+        healthy = [s.service_id for s in snapshots.values() if s.status == "healthy"]
+        if not healthy:
+            return
+        closed = await asyncio.to_thread(self._resolve_recovered_takeovers, healthy, self._incident_id)
+        if closed:
+            stream_manager.broadcast("incident_created", {"incident_id": closed[0]})
+
+    @staticmethod
+    def _resolve_recovered_takeovers(service_ids: list[str], skip_id: str | None) -> list[str]:
+        db = SessionLocal()
+        try:
+            rows = (
+                db.query(Incident)
+                .filter(
+                    Incident.status == "took_over",
+                    Incident.service_id.in_(service_ids),
+                    Incident.id != skip_id,
+                )
+                .all()
+            )
+            now = datetime.utcnow()
+            for inc in rows:
+                inc.status = "resolved"
+                inc.action_taken = "Recovered while you had it"
+                if inc.resolved_at is None:
+                    inc.resolved_at = now
+                inc.events.append(
+                    IncidentEvent(timestamp=now, source="docker", code="resolved", note="Recovered while you had it")
+                )
+            if rows:
+                db.commit()
+            return [inc.id for inc in rows]
+        finally:
+            db.close()
 
     @staticmethod
     def _active_incident_exists(incident_id: str) -> bool:
