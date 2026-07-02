@@ -61,8 +61,16 @@ def _seed_fleet(db):
         Guardrail(
             user_id=user.id,
             key="restart_only",
-            label="Restart is the only action it takes",
-            description="The agent only ever runs `docker restart` — never stop, scale or redeploy.",
+            label="Only safe container actions",
+            description="It only runs `docker restart`, `stop`, or `start` — never scale, redeploy, exec, or anything else.",
+            kind="locked",
+            value=True,
+        ),
+        Guardrail(
+            user_id=user.id,
+            key="no_futile_restart",
+            label="Won't restart what a restart can't fix",
+            description="An OOM-kill or a missing-config crash won't get a doomed restart — it diagnoses and hands off to you.",
             kind="locked",
             value=True,
         ),
