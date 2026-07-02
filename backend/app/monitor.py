@@ -758,7 +758,11 @@ class ServiceMonitor:
                     self._view = "diagnosing"
                     self._broadcast_state()
         except asyncio.TimeoutError:
-            pass
+            # No logs came back within the window — e.g. an OOM-killed container
+            # that printed nothing. Diagnose from container state (exit code / OOM
+            # flag, already in agent_host_info) so the card resolves instead of
+            # hanging on "pending" forever (a silent OOM/crash logs nothing).
+            await self._diagnose_url(self._incident_id, self._service_id)
         try:
             await asyncio.wait_for(self._llm_ready.wait(), timeout=llm_timeout)
         except asyncio.TimeoutError:
@@ -776,7 +780,11 @@ class ServiceMonitor:
                     self._view = "diagnosing"
                     self._broadcast_state()
         except asyncio.TimeoutError:
-            pass
+            # No logs came back within the window — e.g. an OOM-killed container
+            # that printed nothing. Diagnose from container state (exit code / OOM
+            # flag, already in agent_host_info) so the card resolves instead of
+            # hanging on "pending" forever (a silent OOM/crash logs nothing).
+            await self._diagnose_url(self._incident_id, self._service_id)
         try:
             await asyncio.wait_for(self._llm_ready.wait(), timeout=llm_timeout)
         except asyncio.TimeoutError:
