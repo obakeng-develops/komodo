@@ -193,7 +193,7 @@
 								{summaryText()} · watching <strong class="font-semibold text-surface-900">{services.length} service{services.length === 1 ? '' : 's'}</strong>
 								{#if serverGroups.length > 1}across <strong class="font-semibold text-surface-900">{serverGroups.length} servers</strong>{/if}.
 							</div>
-							{#if serverGroups.length > 1}
+							{#if serverGroups.length > 0}
 								<div class="mt-5 flex flex-col divide-y divide-surface-100 border-t border-b border-surface-100">
 									{#each serverGroups as group (group.name)}
 										<button
