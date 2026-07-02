@@ -7,6 +7,25 @@ first. That part is your call.
 You log in. Your teammates log in. Everyone sees the same fleet. Owners change things; operators
 watch and act on incidents but cannot touch the settings.
 
+## What it looks like
+
+Mino lives on one page. When a container fails, it tells you what broke, why, and what it would do
+about it. Then it acts, or waits for your call.
+
+![A live incident: mino-demo-web is down, diagnosed, waiting for approval to restart](docs/screenshots/now-incident.png)
+
+When everything is healthy, it just says so.
+
+![The Now page with every service healthy](docs/screenshots/now-healthy.png)
+
+Every incident it has handled, grouped by machine.
+
+![Incident history grouped by machine, all resolved](docs/screenshots/incidents.png)
+
+And how each container has held up over time.
+
+![The Fleet page showing per-container uptime](docs/screenshots/fleet.png)
+
 ## Requirements
 
 Mino is deliberately small to run. The minimum is **one always-on instance and a database** —
