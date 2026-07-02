@@ -47,12 +47,12 @@
 	function activeText() {
 		if (!$activeIncident) return '';
 		if ($activeIncident.view === 'asking') {
-			return `${$activeIncident.service_name} is down — waiting for your approval to restart.`;
+			return `${$activeIncident.service_name} is down. Waiting for your approval to restart.`;
 		}
 		if ($activeIncident.view === 'takeover') {
-			return `${$activeIncident.service_name} is down — you're handling this one.`;
+			return `${$activeIncident.service_name} is down. You're handling this one.`;
 		}
-		return `${$activeIncident.service_name} is down — restarting it now.`;
+		return `${$activeIncident.service_name} is down. Restarting it now.`;
 	}
 
 	function toggleOpen(incident: Incident) {

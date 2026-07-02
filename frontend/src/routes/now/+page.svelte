@@ -229,11 +229,11 @@
 							<div class="flex justify-between items-start gap-4">
 								<div class="font-serif text-title leading-snug text-surface-900 tracking-tight">
 									{#if $activeIncident.method === 'url'}
-										{$activeIncident.service_name} is unreachable. I can't restart a URL check — here's what I found.
+										{$activeIncident.service_name} is unreachable. I can't restart a URL check. Here's what I found.
 									{:else if !$activeIncident.can_approve}
-										{$activeIncident.service_name} is down — a restart won't fix this. Here's what I found.
+										{$activeIncident.service_name} is down. A restart won't fix this. Here's what I found.
 									{:else}
-										{$activeIncident.service_name} is down. I can {actionVerb($activeIncident.proposed_action)} it — want me to?
+										{$activeIncident.service_name} is down. I can {actionVerb($activeIncident.proposed_action)} it. Want me to?
 									{/if}
 								</div>
 								<Badge pill variant={badge.variant} tone={badge.tone}>{badgeLabel()}</Badge>
@@ -254,7 +254,7 @@
 								<div class="mt-5 px-4 py-3 rounded-lg bg-surface-50 border border-surface-200">
 									<div class="font-mono text-[11px] text-surface-500 tracking-wide uppercase">Diagnosis</div>
 									<div class="mt-1.5 font-sans text-[15px] leading-relaxed {$activeIncident.diagnosis_unavailable ? 'text-surface-500' : 'text-surface-700'}">
-										{#if $activeIncident.diagnosis_unavailable}No diagnosis — LLM unavailable{:else}Diagnosis pending…{/if}
+										{#if $activeIncident.diagnosis_unavailable}No diagnosis, LLM unavailable{:else}Diagnosis pending…{/if}
 									</div>
 								</div>
 							{/if}
@@ -316,7 +316,7 @@
 								<div class="mt-5 px-4 py-3 rounded-lg bg-surface-50 border border-surface-200">
 									<div class="font-mono text-[11px] text-surface-500 tracking-wide uppercase">Diagnosis</div>
 									<div class="mt-1.5 font-sans text-[15px] leading-relaxed {$activeIncident.diagnosis_unavailable ? 'text-surface-500' : 'text-surface-700'}">
-										{#if $activeIncident.diagnosis_unavailable}No diagnosis — LLM unavailable{:else}Diagnosis pending…{/if}
+										{#if $activeIncident.diagnosis_unavailable}No diagnosis, LLM unavailable{:else}Diagnosis pending…{/if}
 									</div>
 								</div>
 							{/if}
@@ -413,13 +413,13 @@
 					{:else if $activeIncident.view === 'takeover'}
 						<div class="p-5 sm:p-9" in:contentFly|local>
 							<Badge pill variant={badge.variant} tone={badge.tone}>{badgeLabel()}</Badge>
-							<div class="mt-4 font-serif text-title leading-snug text-surface-900 tracking-tight">Okay — it's yours.</div>
+							<div class="mt-4 font-serif text-title leading-snug text-surface-900 tracking-tight">Okay, it's yours.</div>
 							{#if $activeIncident.method === 'url'}
 								<div class="mt-3.5 font-serif text-base leading-relaxed text-surface-600">
-									I've stepped back. I can't restart a URL check — here's what I found:
+									I've stepped back. I can't restart a URL check. Here's what I found:
 								</div>
 								<div class="mt-4 bg-surface-50 border border-surface-200 rounded-xl px-[18px] py-4 font-sans text-label leading-relaxed text-surface-700">
-									{$activeIncident.proposed_fix || $activeIncident.llm_diagnosis || 'The endpoint failed its health check — check that it is up and reachable.'}
+									{$activeIncident.proposed_fix || $activeIncident.llm_diagnosis || 'The endpoint failed its health check. Check that it is up and reachable.'}
 								</div>
 							{:else}
 								<div class="mt-3.5 font-serif text-base leading-relaxed text-surface-600">

@@ -41,7 +41,7 @@
 		try {
 			createdHost = await api.hosts.create(n);
 		} catch {
-			hostError = "Couldn't create the server — try again.";
+			hostError = "Couldn't create the server. Try again.";
 		} finally {
 			creatingHost = false;
 		}
@@ -69,7 +69,7 @@
 			const service = await api.services.createUrl(n, u);
 			servicesStore.update((s) => [...s, service]);
 		} catch {
-			urlError = "Couldn't add that — check the name and URL.";
+			urlError = "Couldn't add that. Check the name and URL.";
 		} finally {
 			addingUrl = false;
 		}
@@ -82,7 +82,7 @@
 	$: nextSteps = [
 		{
 			title: 'Connect an LLM',
-			body: 'Get a written cause and fix on each incident. Optional — monitoring and restarts work without it.',
+			body: 'Get a written cause and fix on each incident. Optional. Monitoring and restarts work without it.',
 			done: !!settings?.llm_api_key,
 			cta: 'Add a key'
 		},
@@ -126,7 +126,7 @@
 				<label class="flex flex-col gap-1">
 					<span class="font-sans text-micro text-surface-500">Mino URL</span>
 					<input type="url" placeholder={serverUrl} bind:value={minoUrl} class="{inputClass} font-mono" />
-					<span class="font-sans text-micro text-surface-400">The agent on the server reports back here — usually this Mino instance.</span>
+					<span class="font-sans text-micro text-surface-400">The agent on the server reports back here, usually this Mino instance.</span>
 				</label>
 				<div>
 					<Button type="submit" size="lg" disabled={!hostName.trim() || creatingHost}>

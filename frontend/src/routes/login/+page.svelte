@@ -42,7 +42,7 @@
 		} catch {
 			error = needsSetup
 				? tokenRequired
-					? 'Could not create the account — check the setup token.'
+					? 'Could not create the account. Check the setup token.'
 					: 'Could not create the account.'
 				: 'Invalid email or password.';
 		} finally {
