@@ -230,6 +230,8 @@
 								<div class="font-serif text-title leading-snug text-surface-900 tracking-tight">
 									{#if $activeIncident.method === 'url'}
 										{$activeIncident.service_name} is unreachable. I can't restart a URL check — here's what I found.
+									{:else if !$activeIncident.can_approve}
+										{$activeIncident.service_name} is down — a restart won't fix this. Here's what I found.
 									{:else}
 										{$activeIncident.service_name} is down. I can {actionVerb($activeIncident.proposed_action)} it — want me to?
 									{/if}
@@ -285,9 +287,7 @@
 							</div>
 							<div class="mt-5 pt-5 border-t border-surface-200 flex flex-col sm:flex-row sm:items-center gap-3">
 								{#if $activeIncident.can_approve}
-									<Button size="lg" on:click={approve}>
-										Approve {actionVerb($activeIncident.proposed_action)}
-									</Button>
+									<Button size="lg" on:click={approve}>Approve</Button>
 								{/if}
 								<Button size="lg" variant="secondary" on:click={takeOver}>I'll handle it</Button>
 							</div>
