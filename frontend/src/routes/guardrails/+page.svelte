@@ -4,6 +4,7 @@
 	import { lastLearningCreated } from '$lib/stream';
 	import { isOwner } from '$lib/auth';
 	import GuardrailRow from '$lib/components/GuardrailRow.svelte';
+	import { ago } from '$lib/time';
 	import type { Guardrail as GuardrailType, Learning } from '$lib/types';
 
 	let learnings: Learning[] = [];
@@ -53,18 +54,6 @@
 		return 'low confidence';
 	}
 
-	// Backend datetimes are naive UTC; parse as UTC, not local (matches /fleet).
-	function ago(iso: string | null): string | null {
-		if (!iso) return null;
-		const t = new Date(/[Z+]/.test(iso) ? iso : iso + 'Z').getTime();
-		const s = Math.max(0, (Date.now() - t) / 1000);
-		if (s < 90) return 'just now';
-		const m = s / 60;
-		if (m < 90) return `${Math.round(m)}m ago`;
-		const h = m / 60;
-		if (h < 36) return `${Math.round(h)}h ago`;
-		return `${Math.round(h / 24)}d ago`;
-	}
 </script>
 
 <div class="px-4 sm:px-10 py-7 sm:py-9 pb-20">
